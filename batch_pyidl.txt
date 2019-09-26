@@ -1,0 +1,24 @@
+up=Python.import('updateprior')
+ arg0=[1,2,3]                   
+ x=up.updateprior_func(arg0) 
+ help, x
+ 
+ rd=Python.Import('importlib')  
+ up=rd.reload(up) 
+ help, x
+  
+
+
+
+
+
+  stanidl=Python.import('stanidl')
+    sm=stanidl.compile() 
+    theta=stanidl.rwmh_tac_2tpc(sm,0,0,0,0,0,0,0,0,0,0,0)
+
+  
+
+
+
+rd=Python.Import('importlib') 
+stanidl=rd.reload(stanidl)

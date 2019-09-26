@@ -1,0 +1,24 @@
+Inference for Stan model: anon_model_9c2220e642b79fea9d38141363785dc1.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+        mean se_mean     sd   2.5%    25%    50%    75%  97.5%  n_eff   Rhat
+theta   0.59  3.5e-3   0.14    0.3   0.49   0.59   0.69   0.84   1593    1.0
+lp__   -7.95    0.02   0.71 -10.04  -8.11  -7.68   -7.5  -7.44   1853    1.0
+
+Samples were drawn using NUTS at Fri Aug 16 13:17:10 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+Inference for Stan model: anon_model_9c2220e642b79fea9d38141363785dc1.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+        mean se_mean     sd   2.5%    25%    50%    75%  97.5%  n_eff   Rhat
+theta    0.6  3.9e-3   0.14   0.31    0.5   0.61    0.7   0.85   1314    1.0
+lp__   -7.97    0.02   0.76 -10.19  -8.12  -7.68   -7.5  -7.44   1378    1.0
+
+Samples were drawn using NUTS at Fri Aug 16 13:26:55 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
