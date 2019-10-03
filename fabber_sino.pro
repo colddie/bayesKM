@@ -6,6 +6,7 @@ pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/'
 ; tmpimg = niread_nii(pad+'actimg_fdgC2_0.00000_0.00500000_noise.nii')
 ; tmpimg = niread_nii(pad+'actimg_fdgC2.nii')
 restore, filename = pad+'actimg_fdgC2.sav'
+;restore
 
 stop
 
@@ -56,7 +57,7 @@ projd0 = nidef_proj(/pet3d_mmr, span = 11,$
 nframes = (size(tmpimg))[4]
 
 ; ===================================================================
-goto, line2     ; skip the rest and go directly to fitting
+goto, line3     ; skip the rest and go directly to fitting
 ; ===================================================================
 
 
@@ -73,6 +74,7 @@ tmpsino = fltarr(172,252,837,nframes)
     ; stop
   endfor 
 print, 'TIme elapsed '+ nistring(systime(1)-t0)+' seconds...'
+save,filename=pad+'filetmpsino.sav',tmpsino
 stop
 
 ; ===================================================================
@@ -80,7 +82,7 @@ stop
 ; ===================================================================
 
 line1:
-restore,filename='filetmpsino.sav'
+restore,filename=pad+'filetmpsino.sav'
 print, '-- Start Reconstruction --'
   time0 = systime(1)
 if test_fwd eq 1 then begin
@@ -110,7 +112,7 @@ endif else begin
 endelse
 print, 'Recon time (min): ', (systime(1)-time0)/60.
 
-
+save,filename=pad+'filetmprecon.sav',tmprecon
 stop
 
 
@@ -119,13 +121,12 @@ stop
 ; ===================================================================
 ;compare to the truth Ki=K1*k3/(k2+k3)
 line2:
-restore,filename='filetmprecon.sav'
+restore,filename=pad+'filetmprecon.sav'
 ; tmprecon = fltarr(nrcols,nrrows,nrplanes,nframes)
 ; for iframe=0, nframes-1 do $
 ;   tmprecon[*,*,*,iframe]=congrid(tmpimg[*,*,*,iframe],nrcols,nrrows,nrplanes)
 
 fitmode = 'nlls' ;'mcmc'
-
 
 
 nframe=158
@@ -167,13 +168,14 @@ for jvoxel = 0, long(nrcols)*nrrows*nrplanes-1 do begin
                   double(plasma_t), double(tac), $
                   double(plasma_c),double(tstart),double(tstop),double(output),long(debug),long(llsq_model),$
                   long(isweight)) 
+      ; success = 
       Kiimg[jvoxel]   = output[0]
       Kiimgsd[jvoxel] = output[1]
       Vbimg[jvoxel]   = output[2]
       Vbimgsd[jvoxel] = output[3]
       SWSSimg[jvoxel] = output[4]
     endif
-; stop
+
     if fitmode eq 'mcmc' then begin
       ; do sampling
       mcmc  = 0
@@ -198,7 +200,7 @@ for jvoxel = 0, long(nrcols)*nrrows*nrplanes-1 do begin
                       double(rwmh_par_scale),double(hmc_step_size),long(rwmh_n_burnin),long(rwmh_n_draws),long(model),$
                       long(debug),long(mcmc),long(useprior),$
                       double(plasma_t0), double(tstart), double(tstop)) 
-
+      ; success = 
       Kiimg[jvoxel] = mean(output(*,0))
       Vbimg[jvoxel] = mean(output(*,1)) 
       Kiimgsd[jvoxel] = stddev(output(*,0))
@@ -225,7 +227,7 @@ stop
 ; ================ projection NLLS fitting ==============
 ; ===================================================================
 line3:
-restore,filename='filetmpsino.sav'
+restore,filename=pad+'filetmpsino.sav'
 help, tmpsino
 nframe=158
 inputfile = pad+'input.dat'
@@ -252,8 +254,8 @@ plasma_t0 = [0,plasma_t[0:n_elements(plasma_t)-2]]
 ;   NIproj, img, sino, projd = projd0
 ;   tmpsino1[*,*,*,iframe] = sino
 ; endfor 
-restore,filename='inputsino.sav'
-stop
+; restore,filename=pad+'inputsino.sav'
+; stop
 
 frameNr= n_elements(plasma_t0)
 tstart = 70
@@ -261,13 +263,13 @@ tstop  = 120
 output = double(fltarr(5)) 
 debug  = 0
 llsq_model = 0
-isweight   = 0;
+isweight   = 1;
 patlog     = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
 n1=(size(tmpsino))[1]
 n2=(size(tmpsino))[2]
 n3=(size(tmpsino))[3]
 tmpsino = reform(tmpsino,long(n1)*n2*n3,nframes)
-tmpsino1 = reform(tmpsino1,long(n1)*n2*n3,nframes)
+; tmpsino1 = reform(tmpsino1,long(n1)*n2*n3,nframes)
 Kisino  = fltarr(n1,n2,n3)
 Vbsino  = Kisino*0
 Kisinosd= Kisino*0
@@ -284,6 +286,7 @@ for jvoxel = 0, long(n1)*n2*n3-1 do begin
                 double(plasma_t), double(reform(tac)), $
                 double(plasma_cc),double(tstart),double(tstop),double(output),long(debug),long(llsq_model),$
                 long(isweight)) 
+    ; success = 
     Kisino[jvoxel]   = output[0]
     Kisinosd[jvoxel] = output[1]
     Vbsino[jvoxel]   = output[2]

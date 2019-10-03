@@ -5,7 +5,7 @@
 ; aif = interp1(to,aifs,ts,'spline');
 
 
-
+pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/'
 fromphantom = 1
 modeldef = 'fdg_3comp_basic'
 tracer = 'fdg'    ; way, recropide, fdg, fdopa
@@ -62,11 +62,11 @@ case tracer of
   phantomk4 = phantom * 0
   phantomm  = phantom * 0
 
-  ; According to 
-  phantomK1 = phantom / (max(phantom)/0.6)
-  phantomk2 = phantom / (max(phantom)/1.4)
-  phantomk3 = phantom / (max(phantom)/0.02)
-  phantomk4 = phantom / (max(phantom)/0.009)*0
+  ; According to "Dynamic Positron Emission Tomography Image Restoration via a Kinetics-Induced Bilateral Filter"
+  phantomK1 = phantom / (max(phantom)/0.12)
+  phantomk2 = phantom / (max(phantom)/0.2)
+  phantomk3 = phantom / (max(phantom)/0.1)
+  phantomk4 = phantom / (max(phantom)/0.01)
   phantomm  = phantom / (max(phantom)/0.15)*0
 
   ; genereate dynamic frames
@@ -257,7 +257,7 @@ stop
 
   ; Read input function from file
   ;------------------
-  inputfile = 'input.dat'
+  inputfile = pad+'input.dat'
   dataStruct = { plasma_t:0.0, plasma_c:0.0}
   nrows = File_Lines(inputfile)
   data = Replicate(dataStruct, nrows)
@@ -405,11 +405,11 @@ for iplane = 82, 83 do begin;nplane-1 do begin
 endfor
 
 tmpimg = imgall[*,*,82:83,*]
-mask = niread_nifti('mask.nii')
+mask = niread_nifti(pad+'mask.nii')
 for i=0,n_elements(plasma_c)-1 do tmpimg[*,*,*,i] *= mask
-pad = 'actimg_'+ tracer+compartment 
-save, filename= pad +'.sav', tmpimg
-help,niwrite_nii(tmpimg, pad +'.nii')
+padname = pad+'actimg_'+ tracer+compartment 
+save, filename= padname +'.sav', tmpimg
+help,niwrite_nii(tmpimg, padname +'.nii')
 
 
 
@@ -422,7 +422,7 @@ plasma_t_sif = [plasma_t_sif, plasma_t]
 plasma_t_sif= [ [plasma_t_sif[0:nsample-1]], [plasma_t_sif[1:nsample]], $
                [fltarr(nsample)], [fltarr(nsample)] ]
 
-fname= pad + '.sif' 
+fname= padname + '.sif' 
 OPENW,1,fname 
 PRINTF,1, '01/01/1970 00:00:00 ' + nistring(n_elements(plasma_t)) + ' 4 1 . '+isotope
 PRINTF,1,transpose(plasma_t_sif),FORMAT='(F,1X,F,1X,F7.2,1X,F7.2)' 
@@ -432,9 +432,10 @@ CLOSE,1
 ; insert counts based on images and then add noise
 ; imgweigh actimg_way.nii actimg_way.sif
 ; fvar4img -i=C-11 actimg_way.nii 0.005 actimg_way_noise.nii
-spawn, 'imgweigh '+pad+'.nii '+pad+'.sif' 
-spawn, 'cp ' +pad+'.sif ' + 'tmp.sif'  
-inputfile = 'tmp.sif' 
+spawn, 'imgweigh '+padname+'.nii '+padname+'.sif' 
+spawn, 'cp ' +padname+'.sif ' +padname+ 'tmp.sif'  
+
+inputfile = pad+'tmp.sif' 
 dataStruct = { plasma_t:0.0, plasma_c:0.0, weight:0L, unkown:0.0}
 nrows = File_Lines(inputfile)-1
 data = Replicate(dataStruct, nrows)
@@ -445,28 +446,28 @@ Free_Lun, lun
 plasma_t_sif[*,2] = data.weight
 plasma_t_sif[0,1] = 0.0000001
 plasma_t_sif[1,0] = 0.0000001
-fname= pad + '.sif' 
+fname= padname + '.sif' 
 OPENW,1,fname 
 PRINTF,1, '01/01/1970 00:00:00 ' + nistring(n_elements(plasma_t)) + ' 4 1 . '+isotope
 PRINTF,1,transpose(plasma_t_sif),FORMAT='(F,1X,F,1X,I9,1X,F7.2)' 
 CLOSE,1
-spawn, 'fvar4img -i=' +isotope+' '+pad+'.nii '+nistring(tacnoiselevel)+' '+pad+'_'+nistring(bound)+'_'+nistring(tacnoiselevel)+'_noise.nii'
+spawn, 'fvar4img -i=' +isotope+' '+padname+'.nii '+nistring(tacnoiselevel)+' '+padname+'_'+nistring(bound)+'_'+nistring(tacnoiselevel)+'_noise.nii'
 
 
 
 
 ; write the plasma_t.txt and plasma_c.txt
 if compartment eq 'C1' or compartment eq 'C2' then begin
-  fname= 'plasma_t.txt'
+  fname= pad+'plasma_t.txt'
   OPENW,1,fname 
   PRINTF,1,plasma_t
   CLOSE,1
-  fname= 'plasma_c.txt'
+  fname= pad+'plasma_c.txt'
   OPENW,1,fname 
   PRINTF,1,plasma_c
   CLOSE,1
 
-  fname = pad +'.nii' ; pad+'_'+nistring(bound)+'_'+nistring(tacnoiselevel)+'_noise.nii'
+  fname = padname +'.nii' ; pad+'_'+nistring(bound)+'_'+nistring(tacnoiselevel)+'_noise.nii'
   mask = phantom *0
   mask[where(phantom eq 1)] = 1.0
   mask=mask[*,*,82:83]
@@ -476,7 +477,7 @@ if compartment eq 'C1' or compartment eq 'C2' then begin
     tmp = img[*,*,*,ip] * mask
     tissue_c[ip] = mean(tmp[where(tmp gt 0.)])
   endfor
-  fname = 'ref_tissuec.txt'
+  fname = pad+'ref_tissuec.txt'
   OPENW,1,fname 
   PRINTF,1,tissue_c
   CLOSE,1
@@ -487,6 +488,7 @@ endif
 tac_cere=tmpimg[128,128,0,*] 
 tac_matter=tmpimg[116,76,0,*]   
 tac_nuc=tmpimg[125,172,0,*]  
+window,0
 plot,plasma_t,plasma_c  
 oplot,plasma_t,tac_cere,col=1 
 oplot,plasma_t,tac_matter,col=2   ; green

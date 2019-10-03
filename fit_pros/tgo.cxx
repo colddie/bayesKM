@@ -11,7 +11,9 @@
 /// or webpage www.abo.fi/~atorn/ProbAlg/Page53.html
 ///
 /******************************************************************************/
+// #include "libtpcmodel.h"
 #include "tgo.h"
+
 /******************************************************************************/
 #ifndef RAND_MAX
 /** Max nr for random nr generator */
