@@ -4,8 +4,10 @@
  *  @author Vesa Oikonen
  */
 
+// Vb is not estimated, to enable use model function simC3vs()
+
 /*****************************************************************************/
-#include "tpcclibConfig.h"
+// #include "tpcclibConfig.h"
 /*****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +24,7 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
-static const int parNr=5;
+static const int parNr=3;
 DFT input, data;
 double *petmeas, *petsim;
 static double fVb=-1.0;
@@ -33,25 +35,23 @@ static double wss_wo_penalty=0.0;
 
 /*****************************************************************************/
 /* Local functions */
-double cm3Funcr(int parNr, double *p, void*);
+double cm2Func(int parNr, double *p, void*);
 /*****************************************************************************/
-
 
 
 
 /**
  *  Main
  */
-int tcm2re_idl(int argc, char **argv)
+int tcm1_idl(int argc, char **argv)
 {
 
   int          ai, help=0, version=0, verbose=1;
   int          fi, pi, m, n, ret;
-  int          lambda_k3=0;
   int          ref=-1, refAdded=0;   // currently reference region is not enabled;
   char        *cptr, refname[FILENAME_MAX], tmp[FILENAME_MAX];
   double       fitdur=1.0E+10;
-  double       wss, aic, K1, k2, k3,k4,Vb,Vt;
+  double       wss, aic, K1, k2, Vb;
   RES          res;
   IFT          ift;
   int          doBootstrap=0, doSD=0, doCL=0;
@@ -60,7 +60,7 @@ int tcm2re_idl(int argc, char **argv)
   int          tgoNr=0, neighNr=0, iterNr=0, fittedparNr=0;
 
   int          dataNr=0, first, last;
-  double      *t0, *t1, *tac, *ctt, *output, *weights, *bmatrix; //, *matrix;
+  double      *t0, *t1, *tac, *ctt, *output, *weights, *bmatrix; 
   int          voiNr = 1;
   unsigned int    frameNr, isweight = 0, logan_mode = 0, 
                   bootstrapIter, directbp=0,ri =0, inputtype=0;
@@ -108,7 +108,7 @@ int tcm2re_idl(int argc, char **argv)
     if(verbose>3) printf(" %d %g %g\n", pi+1, def_pmin[pi], def_pmax[pi]);
     // Let user set negative lower limits if (s)he so wishes, but upper limits must be positive
     //if(def_pmin[pi]<0.0 && pi!=2) ret++; // Lower limit for BP can be negative
-    if(def_pmax[pi]<=0.0) ret++; // Upper limit must be > 0
+    if(def_pmax[pi]<0.0) ret++; // Upper limit must be >= 0
     if(def_pmax[pi]<def_pmin[pi]) ret++;
     if(def_pmax[pi]>def_pmin[pi]) n++;
     if(verbose>3 && ret>0) printf("   -> invalid\n");
@@ -131,8 +131,8 @@ int tcm2re_idl(int argc, char **argv)
 
 
   /* Fixed/fitted Vb */
-  if(fVb>=0.0) def_pmin[4]=def_pmax[4]=fVb;
-  if(def_pmin[4]==def_pmax[4]) fVb=def_pmin[4];
+  if(fVb>=0.0) def_pmin[2]=def_pmax[2]=fVb;
+  if(def_pmin[2]==def_pmax[2]) fVb=def_pmin[2];
   // if(fVb==0.0) strcpy(bfile, "");
   if(verbose>1) {
     // printf("bfile := %s\n", bfile);
@@ -177,7 +177,8 @@ int tcm2re_idl(int argc, char **argv)
     if(!data.isweight) { data.w[i]=1.0;  input.w[i]=1.0; }
 }
 
- if(verbose>10) {
+
+if(verbose>10) {
 printf("tissue data...\n");
 dftPrint(&data); 
 printf("input data...\n");
@@ -278,13 +279,11 @@ dftPrint(&input); }
   res.time=time(NULL);
   /* Set parameter number, including also the extra "parameters"
      and the parameter names and units */
-  res.parNr=8; 
+  res.parNr=5; 
   pi=0; strcpy(res.parname[pi], "K1"); strcpy(res.parunit[pi], "ml/(min*ml)");
-  pi++; strcpy(res.parname[pi], "K1/k2"); strcpy(res.parunit[pi], "");
-  pi++; strcpy(res.parname[pi], "k3"); strcpy(res.parunit[pi], "1/min");
-  pi++; strcpy(res.parname[pi], "K3/k4"); strcpy(res.parunit[pi], "");  
+  pi++; strcpy(res.parname[pi], "K1/k2"); strcpy(res.parunit[pi], "ml/ml");
   pi++; strcpy(res.parname[pi], "Vb"); strcpy(res.parunit[pi], "%");
-  pi++; strcpy(res.parname[pi], "Vt"); strcpy(res.parunit[pi], "%");
+  // pi++; strcpy(res.parname[pi], "DVR"); strcpy(res.parunit[pi], "ml/ml");
   pi++; strcpy(res.parname[pi], "WSS"); strcpy(res.parunit[pi], "");
   pi++; strcpy(res.parname[pi], "AIC"); strcpy(res.parunit[pi], "");
 
@@ -303,12 +302,7 @@ dftPrint(&input); }
     /* Set constraints */
     pmin[0]=def_pmin[0];    pmax[0]=def_pmax[0];   /* K1    */
     pmin[1]=def_pmin[1];    pmax[1]=def_pmax[1];   /* K1/k2 */
-    // if(ref>=0) {
-    //   pmin[1]=pmax[1]=fk1k2;                       /* K1/k2 */
-    // }
-    pmin[2]=def_pmin[2];    pmax[2]=def_pmax[2];   /* k3    */
-    pmin[3]=def_pmin[3];    pmax[3]=def_pmax[3];   /* k3/k4    */
-    pmin[4]=def_pmin[4];    pmax[4]=def_pmax[4];   /* Vb    */    
+    pmin[2]=def_pmin[2];    pmax[2]=def_pmax[2];   /* Vb    */
     for(pi=fittedparNr=0; pi<parNr; pi++) if(pmax[pi]>pmin[pi]) fittedparNr++;
     if(verbose>3) {
       printf("  constraints :=");
@@ -321,12 +315,12 @@ dftPrint(&input); }
     TGO_LOCAL_INSIDE=0;
     TGO_SQUARED_TRANSF=1;
     // tgoNr=300; iterNr=0; neighNr=5;
-    tgoNr=50+25*fittedparNr;
-    neighNr=6*fittedparNr;
+    // tgoNr=50+25*fittedparNr;
+    // neighNr=6*fittedparNr;
     iterNr=0;
     ret=tgo(
-      pmin, pmax, cm3Funcr, NULL, parNr, 5,
-      &wss, res.voi[ri].parameter, 300, 0, verbose-8);
+      pmin, pmax, cm2Func, NULL, parNr, 8,
+      &wss, res.voi[ri].parameter, 100, 0, verbose-8);
     if(ret>0) {
       printf( "\nError in optimization (%d).\n", ret);
       dftEmpty(&input); dftEmpty(&data); resEmpty(&res); return(8);
@@ -366,7 +360,7 @@ dftPrint(&input); }
         data.voi[ri].y2,
         // tissue TAC noisy data is written to be used by objf
         petmeas, 
-        parNr, data.w, cm3Funcr, tmp, verbose-4, bmatrix
+        parNr, data.w, cm2Func, tmp, verbose-4,bmatrix
       );
 
       if(ret) {
@@ -397,15 +391,8 @@ dftPrint(&input); }
     /* Calculate Ki, lambda*k3, and k3/(k2+k3) */
     K1=res.voi[ri].parameter[0];
     k2=K1/res.voi[ri].parameter[1];
-    k3=res.voi[ri].parameter[2];
-    k4=k3/res.voi[ri].parameter[3];
-    Vb=res.voi[ri].parameter[4];
+    Vb=res.voi[ri].parameter[2];
 
-    /* Calculate Vt */
-    res.voi[ri].parameter[5]=res.voi[ri].parameter[1];
-    if(res.voi[ri].parameter[3]>0.0)
-      res.voi[ri].parameter[5]*=(1.0+res.voi[ri].parameter[3]);
-    Vt=res.voi[ri].parameter[5];
     /* done with this region */
     // if(data.voiNr>2 && verbose==1) {fprintf(stdout, ".");}
 
@@ -415,27 +402,11 @@ dftPrint(&input); }
 if(verbose>0) {printf( "\n");   resPrint(&res);}
   output[0] = K1;     // see below
   output[1] = k2;
-  output[2] = k3;
-  output[3] = k4;
-  output[4] = Vb;
-  output[5] = Vt;
-  output[7] = wss;
-  output[8] = aic;
-  printf("test me!\n");
-  if(doSD) {output[7] = res.voi[0].sd[0];output[8] = res.voi[0].sd[1];
-            output[9] = res.voi[0].sd[2]; output[10] = res.voi[0].sd[3]; output[11] = res.voi[0].sd[4];
-            output[12] = res.voi[0].sd[5];}
-  printf("test me!\n");
-    //  if(doSD) { res->voi[i].cl1[j]; res->voi[i].cl2[j]; }
-  // /* Delete reference region(s) from the results unless it already existed in data */
-  // if(inputtype==5) {
-  //   resDelete(&res, ref);
-  // } else {
-  //   for(int i=data.voiNr-1; i>=0; i--) if(data.voi[i].sw!=0) {
-  //     resDelete(&res, i);
-  //   }
-  //   ref=-1;
-  // }
+  output[2] = Vb;
+  output[3] = wss;
+  output[4] = aic;
+
+  if(doSD) {output[5] = res.voi[0].sd[0];output[6] = res.voi[0].sd[1];output[7] = res.voi[0].sd[2]; }
 
   resEmpty(&res);
   dftEmpty(&data);
@@ -444,15 +415,6 @@ if(verbose>0) {printf( "\n");   resPrint(&res);}
   return(0);
 }
 
-//   pi=0; strcpy(res.parname[pi], "K1"); strcpy(res.parunit[pi], "ml/(min*ml)");
-//   pi++; strcpy(res.parname[pi], "K1/k2"); strcpy(res.parunit[pi], "");
-//   pi++; strcpy(res.parname[pi], "k3"); strcpy(res.parunit[pi], "1/min");
-//   pi++; strcpy(res.parname[pi], "Vb"); strcpy(res.parunit[pi], "%");
-//   pi++; strcpy(res.parname[pi], "Ki"); strcpy(res.parunit[pi], "ml/(min*ml)");
-//   pi++; strcpy(res.parname[pi], "k3*K1/k2"); strcpy(res.parunit[pi], "1/min");
-//   pi++; strcpy(res.parname[pi], "k3/(k2+k3)"); strcpy(res.parunit[pi], "");
-//   pi++; strcpy(res.parname[pi], "WSS"); strcpy(res.parunit[pi], "");
-//   pi++; strcpy(res.parname[pi], "AIC"); strcpy(res.parunit[pi], "");
 
 
 
@@ -461,29 +423,25 @@ if(verbose>0) {printf( "\n");   resPrint(&res);}
  *  Functions to be minimized
  *
  *****************************************************************************/
-double cm3Funcr(int parNr, double *p, void *fdata)
+double cm2Func(int parNr, double *p, void *fdata)
 {
   int fi, ret;
-  double Vb, k2, k3, k4, d, wss=0.0;
+  double Vb, k2, d, wss=0.0;
   double pa[MAX_PARAMETERS], penalty=1.0;
 
   /* Check parameters against the constraints */
   ret=modelCheckParameters(parNr, pmin, pmax, p, pa, &penalty);
   if(fdata) {}
-  /* Calculate k2, k3 & k4 */
-  k2=pa[0]/pa[1];
-  if(pa[3]>0.0) {k3=pa[2]; k4=k3/pa[3];} else k3=k4=0.0;
-  if(fVb>=0.0) Vb=fVb; else Vb=pa[4];
+  /* Calculate k2 and k3 */
+  k2=pa[0]/pa[1]; if(fVb>=0.0) Vb=fVb; else Vb=pa[2];
 
   /* Simulate the tissue PET TAC */
   // ret=simC3vs(
   //   input.x, input.voi[0].y, input.voi[1].y, input.frameNr,
   //   pa[0], k2, k3, 0.0, 0.0, 0.0, 0.0, Vb, 1.0,
   //   input.voi[0].y2, NULL, NULL, NULL, NULL, NULL);
-
-  printf("");
-  ret=simC2( input.x,input.voi[0].y,input.frameNr,pa[0],k2,k3,k4,
-      petsim,NULL,NULL);
+  ret=simC1( input.x,input.voi[0].y,input.frameNr,pa[0],k2,
+      petsim);
   if(ret) {
     printf("error %d in simulation\n", ret);
     return(nan(""));
@@ -514,8 +472,8 @@ double cm3Funcr(int parNr, double *p, void *fdata)
   }
   wss_wo_penalty=wss;
   wss*=penalty;
-  if(0) printf("K1=%g  k2=%g  k3=%g  Vb=%g  => %g\n",
-    pa[0], k2, pa[2], Vb, wss);
+  if(0) printf("K1=%g  k2=%g Vb=%g  => %g\n",
+    pa[0], k2, Vb, wss);
 
   return(wss);
 }

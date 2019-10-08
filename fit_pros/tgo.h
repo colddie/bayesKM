@@ -502,3 +502,16 @@ int nnlsWght(
 int nnlsWghtSquared(
   int N, int M, double **A, double *b, double *sweight
 );
+
+
+
+/* bootstrap */
+int bootstrapr(
+  int iterNr,
+  double *cLim1, double *cLim2, double *SD, double *parameter,
+  double *lowlim, double *uplim, int frameNr, double *origTac,
+  double *fitTac, double *bsTAC, int parNr, double *weight,
+  double (*objf)(int, double*, void*), char *status, int verbose, double *matrix
+);
+
+int temp_roundf(float e);

@@ -34,7 +34,7 @@
 
 struct norm_data {
     double nsample;
-    double nparams = 4.0;
+    double nparams;   // = 4.0;
     arma::vec tissue_c;
     arma::vec plasma_c;
     arma::vec plasma_t;
@@ -50,6 +50,7 @@ struct norm_data {
     double tstart;
     double tstop;
     double k2;
+    double sensitivity;
 };
 
 double ll_dens_tpc2(const arma::vec& vals_inp, void* ll_data)
@@ -180,7 +181,7 @@ double simC2_main_rwmh(const arma::vec& vals_inp, void* ll_data)
         }
     }
 
-    ret *= 1; //1e2;   ///////////////
+    ret *= dta->sensitivity; //1e3; //1e2;   ///////////////
 
     //  const double ret = - arma::accu(arma::pow(result1-dta->tissue_c,2))  *100000;   /// before there is no such scale and does not work
     if (verbose_flag) {
@@ -306,6 +307,13 @@ extern "C" int rwmh_tac_2tpc(int argc, float * argv[])
     unsigned int nsample = *(unsigned int*) argv[0];
     dta.nsample = nsample;
 
+    unsigned int usemodel = *(unsigned int*)argv[14];
+    dta.model = usemodel;
+
+    // fix last parameter
+    if (dta.model == 1 || dta.model == 5 || dta.model == 6) { dta.nparams = 2; };
+    if (dta.model == 2 || dta.model == 3 || dta.model == 4) { dta.nparams = 4; };
+
     double *x_dta = (double *)argv[1];
     arma::vec tac(nsample);
     for (int i=0;i<nsample;i++) {
@@ -319,7 +327,6 @@ extern "C" int rwmh_tac_2tpc(int argc, float * argv[])
        plasma_t[i] = *(y_dta+i);
     }
     dta.plasma_t = plasma_t;
-
 
     double *z_dta = (double *)argv[3];
     arma::vec plasma_c(nsample);
@@ -384,9 +391,6 @@ extern "C" int rwmh_tac_2tpc(int argc, float * argv[])
     // double ub2 = *(double*)argv[21];
     // double ub3 = *(double*)argv[22];
 
-    unsigned int usemodel = *(unsigned int*)argv[14];
-    dta.model = usemodel;
-
     unsigned int verbose_flag = *(unsigned int*)argv[15];
     dta.debug = verbose_flag;
 
@@ -394,21 +398,25 @@ extern "C" int rwmh_tac_2tpc(int argc, float * argv[])
 
     unsigned int useprior = *(unsigned int*)argv[17];
     dta.useprior = useprior;
+    
+    dta.sensitivity  = *(double*)argv[18];   
+    if (dta.sensitivity == 0.0) { dta.sensitivity = 1.0; }
 
-        
-    if ((double *)argv[18] != NULL) {
-        double *y_dta = (double *)argv[18];
+    // if ((double *)argv[18] != NULL) {
+    if (argc > 19) {
+        printf("Sampling with PATLAK or LOGAN model!\n"); 
+        double *y_dta = (double *)argv[19];
         arma::vec plasma_t1(nsample);
         for (int i=0;i<nsample;i++) {
             plasma_t1[i] = *(y_dta+i);
         }
         dta.plasma_t1 = plasma_t1;
 
-        double tstart = *(double*)argv[19]; dta.tstart = tstart;
-        double tstop  = *(double*)argv[20]; dta.tstop = tstop; 
+        double tstart = *(double*)argv[20]; dta.tstart = tstart;
+        double tstop  = *(double*)argv[21]; dta.tstop = tstop; 
+    
+    if ((double *)argv[22] != NULL) {    double k2     = *(double*)argv[21]; dta.k2 = k2;  }
     }
-    if ((double *)argv[21] != NULL) {    double k2     = *(double*)argv[21]; dta.k2 = k2;  }
-
 
     // if (verbose_flag) {
     //     FILE *pfile = fopen(debugfile, "a+");
@@ -440,8 +448,6 @@ extern "C" int rwmh_tac_2tpc(int argc, float * argv[])
     // ub(3) = ub3;
     // // ub(0) = arma::datum::inf;
 
-    // fix last parameter
-    if (dta.model == 3) {};
 
     // mcmc setting
     mcmc::algo_settings_t settings;

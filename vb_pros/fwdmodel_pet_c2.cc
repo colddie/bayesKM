@@ -146,6 +146,8 @@ void PetFwdModel::Initialize(FabberRunData &rundata)
     }
     // plasma_c = fabber::read_matrix_file(designFile);
      
+    free(plasma_t);
+	free(plasma_c);
 }
 
 int PetFwdModel::NumParams() const
@@ -250,9 +252,8 @@ void PetFwdModel::Evaluate(const ColumnVector &params, ColumnVector &result) con
         result(i) = *(results+i-1);    // start from first image
     }
 	
-	// free(results);
-    // free(plasma_t);
-	// free(plasma_c);
+	free(results);
+
 
 }
 

@@ -4,6 +4,8 @@
  *  @author Vesa Oikonen
  */
 
+// Vb is not estimated, to enable use model function simC3vs()
+
 /*****************************************************************************/
 // #include "tpcclibConfig.h"
 /*****************************************************************************/
@@ -117,7 +119,7 @@ int tcm2_idl(int argc, char **argv)
     if(verbose>3) printf(" %d %g %g\n", pi+1, def_pmin[pi], def_pmax[pi]);
     // Let user set negative lower limits if (s)he so wishes, but upper limits must be positive
     //if(def_pmin[pi]<0.0 && pi!=2) ret++; // Lower limit for BP can be negative
-    if(def_pmax[pi]<=0.0) ret++; // Upper limit must be > 0
+    if(def_pmax[pi]<0.0) ret++; // Upper limit must be >= 0
     if(def_pmax[pi]<def_pmin[pi]) ret++;
     if(def_pmax[pi]>def_pmin[pi]) n++;
     if(verbose>3 && ret>0) printf("   -> invalid\n");
@@ -186,10 +188,12 @@ int tcm2_idl(int argc, char **argv)
     if(!data.isweight) { data.w[i]=1.0;  input.w[i]=1.0; }
 }
 
+ if(verbose>10) {
 printf("tissue data...\n");
 dftPrint(&data); 
 printf("input data...\n");
 dftPrint(&input); 
+ }
 
 /* Sort the data by increasing sample times */
   dftSortByFrame(&data);
@@ -345,19 +349,6 @@ dftPrint(&input);
     wss=wss_wo_penalty;
 
 
-  // COM com;
-  // com.wss_wo_penalty = wss_wo_penalty;
-  // com.fitframeNr =fitframeNr;
-  // com.fk1k2 = fk1k2;
-  // com.pmin = pmin;
-  // com.pmax = pmax;
-  // com.fvb = fvb;
-  // com.petmeas = petmeas;
-  // com.petsim = petsim;
-  // com.input = input;
-  // com.data = data;
-  // com. parNr = parNr;
-
     /* Bootstrap */
     if(doBootstrap) {
       if(verbose>2) printf("  bootstrapping\n");
@@ -461,15 +452,6 @@ if(verbose>0) {printf( "\n");   resPrint(&res);}
   return(0);
 }
 
-//   pi=0; strcpy(res.parname[pi], "K1"); strcpy(res.parunit[pi], "ml/(min*ml)");
-//   pi++; strcpy(res.parname[pi], "K1/k2"); strcpy(res.parunit[pi], "");
-//   pi++; strcpy(res.parname[pi], "k3"); strcpy(res.parunit[pi], "1/min");
-//   pi++; strcpy(res.parname[pi], "Vb"); strcpy(res.parunit[pi], "%");
-//   pi++; strcpy(res.parname[pi], "Ki"); strcpy(res.parunit[pi], "ml/(min*ml)");
-//   pi++; strcpy(res.parname[pi], "k3*K1/k2"); strcpy(res.parunit[pi], "1/min");
-//   pi++; strcpy(res.parname[pi], "k3/(k2+k3)"); strcpy(res.parunit[pi], "");
-//   pi++; strcpy(res.parname[pi], "WSS"); strcpy(res.parunit[pi], "");
-//   pi++; strcpy(res.parname[pi], "AIC"); strcpy(res.parunit[pi], "");
 
 
 

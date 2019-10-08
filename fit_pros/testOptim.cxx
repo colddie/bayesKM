@@ -66,15 +66,6 @@ parameter_vec residual_derivative (
     return der;
 }
 
-// for dlib 
-double booth_fn0(const column_vec& m)
-{
-    const double x_1 = m(0); 
-    const double x_2 = m(1);
-    double obj_val = std::pow(x_1 + 2*x_2 - 7.0,2) + std::pow(2*x_1 + x_2 - 5.0,2);
-    return obj_val;
-}
-
 // for bobyqa and powell only
 double booth_fn(int parNr, double *p, void *fdata)
 {
@@ -86,13 +77,29 @@ double booth_fn(int parNr, double *p, void *fdata)
     // gradient fee methods goes here
 }
 
+// for dlib 
+double booth_fn0(const column_vec& m)
+{
+    const double x_1 = m(0); 
+    const double x_2 = m(1);
+    double p[2];
+    p[0] =  x_1;
+    p[1] =  x_2;
+    return booth_fn(2,p, NULL);
+}
+
+
 // for first-order derivative and derivative-free methods
 double booth_fn1(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
 {
     double x_1 = vals_inp(0);
     double x_2 = vals_inp(1);
- 
-    double obj_val = std::pow(x_1 + 2*x_2 - 7.0,2) + std::pow(2*x_1 + x_2 - 5.0,2);
+
+    double p[2];
+    p[0] =  x_1;
+    p[1] =  x_2;
+    double obj_val = booth_fn(2,p, NULL);
+    // double obj_val = std::pow(x_1 + 2*x_2 - 7.0,2) + std::pow(2*x_1 + x_2 - 5.0,2);
     // gradient required here after
     if (grad_out) {
         (*grad_out)(0) = 2*(x_1 + 2*x_2 - 7.0) + 2*(2*x_1 + x_2 - 5.0)*2;
@@ -108,7 +115,11 @@ double booth_fn2(const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess
     double x_1 = vals_inp(0);
     double x_2 = vals_inp(1);
  
-    double obj_val = std::pow(x_1 + 2*x_2 - 7.0,2) + std::pow(2*x_1 + x_2 - 5.0,2);
+    double p[2];
+    p[0] =  x_1;
+    p[1] =  x_2;
+    double obj_val = booth_fn(2,p, NULL);
+    // double obj_val = std::pow(x_1 + 2*x_2 - 7.0,2) + std::pow(2*x_1 + x_2 - 5.0,2);
     // gradient required here after
     if (grad_out) {
         (*grad_out)(0) = 2*(x_1 + 2*x_2 - 7.0) + 2*(2*x_1 + x_2 - 5.0)*2;
@@ -262,7 +273,7 @@ int main()
     // run Newton-based optim
     x = arma::ones(parNr,1) + 1.0; // initial values
 
-    success = optim::newton(x,booth_fn2,nullptr);
+    success = optim::newton(x,booth_fn2,nullptr,settings);
     arma::cout << "\nnewton: true values vs estimates:\n" << x << arma::endl;
  
 
@@ -445,6 +456,47 @@ int main()
     arma::cout << "de: solution to Booth test:\n" << x << arma::endl;
  
 
+
+
+
+    printf("*************************************\n");
+    printf("bootstrapping...\n");
+    printf("*************************************\n");
+    // double petmeas[1];
+    // double fittac[1];
+    // int sampleNr = 200;
+    // petmeas[0] = 0.0;
+    // // output[0] = 1.2;   ///////////////////////////////
+    // fittac[0] = booth_fn(2,output,NULL);
+    // double *cl1 = NULL;
+    // double *cl2 = NULL;
+    // double sd[2];
+    // // double pmax[2], pmin[2];
+    // // pmax(0)=0.0; pmax(1)=10.0;
+    // // pmin(0)=0.0; pmin(1)=10.0;    
+    // int frameNr = 1;
+    // // int parNr = 2;
+    // double w[1];
+    // w[0] = 1.0;
+    // char tmp[1000];
+    // double bmatrix[sampleNr*parNr];
+    // int rett=bootstrapr(
+    //     sampleNr, cl1, cl2, sd,
+    //     output, pmin, pmax, frameNr,      //single frame
+    //     // measured original TAC, not modified
+    //     petmeas,
+    //     // fitted TAC, not modified
+    //     fittac,       // or booth_fn1(x)
+    //     // tissue TAC noisy data is written to be used by objf
+    //     petmeas, 
+    //     parNr, w, booth_fn, tmp, verbose+9,bmatrix
+    //     );
+
+    
+
+
+
+
     printf("\n");
     printf("\n");
     printf("\n");
@@ -457,7 +509,9 @@ int main()
     printf("*************************************\n");
     printf("*************************************\n");
     // randomly pick a set of parameters to use in this example
-    const parameter_vec params = 10*dlib::randm(3,1);
+    const parameter_vec params= 10*dlib::randm(3,1);
+    // dlib::matrix<double,3,1> params = 10*dlib::randm(3,1);
+    printf("hello");
     std::cout << "params: " << dlib::trans(params) << std::endl;
 
     // Now let's generate a bunch of input/output pairs according to our model.
@@ -594,7 +648,8 @@ int main()
     std::cout << "solution error:      "<< length(x_1 - params) << std::endl;
 
 
-
+    free(output);
+    free(nnls_mat);
     return 0;
 
 }

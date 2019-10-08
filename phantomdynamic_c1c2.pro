@@ -8,12 +8,13 @@
 pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/'
 fromphantom = 1
 modeldef = 'fdg_3comp_basic'
-tracer = 'fdg'    ; way, recropide, fdg, fdopa
+tracer = 'fluropirdize'    ; way, recropide, fdg, fdopa, fluropirdize
 isotope = 'F-18'     ;'C-11'   ; 'F-18'
-compartment = 'C2'    ; 'C1', 'srtm', 'rtcm'
+compartment = 'C1'    ; 'C1', 'srtm', 'rtcm'
 bound = 0.05*0             ; high the high variance in Ks
 tacnoiselevel = 0.005     ; higher the high noise
 nframe = 158
+fwhm = 5.0
 
 case tracer of 
   'fluropirdize' : begin
@@ -30,11 +31,13 @@ case tracer of
     phantom[where(img ge 150. and img lt 250.)]=4.
     phantomK1 = phantom * 0
     phantomk2 = phantom * 0
+    phantomk3 = phantom * 0
+    phantomk4 = phantom * 0
     phantomm = phantom * 0
 
     ; According to 
-    phantomK1 = phantom / (max(phantom)/0.6)
-    phantomk2 = phantom / (max(phantom)/1.4)
+    phantomK1 = phantom / (max(phantom)/0.12)
+    phantomk2 = phantom / (max(phantom)/0.2)
 
     ; genereate dynamic frames
 
@@ -325,6 +328,14 @@ stop
 ; -----------------------------------------
 
 
+; model the resolution in parametric space
+if fwhm gt 0 then begin
+      phantomK1 = NIconvolgauss(phantomK1,fwhm=fwhm)     ;,dimensions=3
+      phantomk2 = NIconvolgauss(phantomk2,fwhm=fwhm)     ;,dimensions=3
+      phantomk3 = NIconvolgauss(phantomk3,fwhm=fwhm)     ;,dimensions=3
+      phantomk4 = NIconvolgauss(phantomk4,fwhm=fwhm)     ;,dimensions=3
+end
+
 imgall = fltarr(ncol, nrow, nplane, n_elements(plasma_t))
 for iplane = 82, 83 do begin;nplane-1 do begin
     print, 'plane number ' + nistring(iplane)
@@ -404,6 +415,12 @@ for iplane = 82, 83 do begin;nplane-1 do begin
     endfor
 endfor
 
+; if fwhm gt 0 then begin
+;     for iframe=0,nframe/2-1 do begin
+;       tmp = NIconvolgauss(imgall[*,*,*,iframe],fwhm=fwhm)     ;,dimensions=3
+;       imgall[*,*,*,iframe] = tmp
+;     end 
+; end
 tmpimg = imgall[*,*,82:83,*]
 mask = niread_nifti(pad+'mask.nii')
 for i=0,n_elements(plasma_c)-1 do tmpimg[*,*,*,i] *= mask

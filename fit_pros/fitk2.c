@@ -500,10 +500,10 @@ int main(int argc, char **argv)
         // measured original TAC, not modified
         dft.voi[ri].y,
         // fitted TAC, not modified
-	dft.voi[ri].y2,
+        dft.voi[ri].y2,
         // tissue TAC noisy data is written to be used by objf
-	petmeas, 
-	parNr, dft.w, cm2Func, tmp, verbose-4
+        petmeas, 
+        parNr, dft.w, cm2Func, tmp, verbose-4
       );
       if(ret) {
         fprintf(stderr, "\nError in bootstrap: %s\n", tmp);
