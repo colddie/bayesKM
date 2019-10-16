@@ -25,8 +25,8 @@
 ;   " -density=<value>",
 ;   "     Tissue density in MR calculation; default is 1.0 g/ml.",
 
-    useref = 0;   use reference region as input?
-    testmode = '1TCM';   'patlak','logan','fur','mrtm','sim_patlak','sim_logan','SRTM','2TCMrev'
+  useref = 0;   use reference region as input?
+  testmode = 'pCT';   'patlak','logan','fur','mrtm','sim_patlak','sim_logan','SRTM','2TCMrev','MBF', 'pCT'
 
 
 case testmode of
@@ -417,6 +417,131 @@ case testmode of
     '3TCM' : begin
   
   end
+
+
+  'MBF' : begin
+    t1 = [ 0.0200000,     0.165000,     0.335000,     0.500000,     0.665000,     0.835000, $
+      1.00000,      1.16500,      1.33500,      1.50000,      1.66500,      1.83500, $
+      2.00000,      2.16500,      2.33500,      2.50000,      2.66500,      2.83500, $
+      3.00000,      3.16500,      3.33500,      3.99000,      7.74000,      9.50000, $
+      11.5000,      13.5000,      15.5000,      17.5000,      19.5000,      21.5000, $
+      23.5000,      25.5000,      27.5000,      29.5000,      31.5000,      33.5000, $
+      35.5000,      37.5000,      39.5000,      41.5000,      43.5000,      45.5000, $
+      47.5000,      49.5000,      51.5000,      53.5000,      55.5000,      57.5000, $
+      59.5000,      61.5000,      63.5000,      65.5000,      67.5000,      69.5000, $
+      71.5000,      73.5000,      75.5000,      77.5000,      79.5000,      81.5000, $
+      83.5000,      85.5000,      87.5000,      89.5000,      91.5000,      93.5000, $
+      95.5000,      97.5000,      99.5000,      101.500,      103.500,      105.500, $
+      107.500,      109.500,      111.500,      113.500,      115.500,      117.500, $
+      119.500 ]
+    t0 = [[0], t1[0:n_elements(t1)-2]] 
+    ctt = [  0.0269768,    0.0784673,     0.154387,      20.2208,      110.244,      69.2936, $
+      54.0065,      44.0441,      38.6799,      32.5098,      27.7044,      25.0393, $
+      23.9469,      21.8217,      20.9813,      22.1366,      20.3976,      20.8287, $
+      20.6408,      20.2345,      19.3993,      18.7402,      12.9408,      12.0988, $
+      11.2533,      10.5118,      9.86051,      9.28776,      8.78324,      8.33802, $
+      7.94436,      7.59550,      7.28559,      7.00951,      6.76285,      6.54175, $
+      6.34286,      6.16328,      6.00046,      5.85223,      5.71665,      5.59206, $
+      5.47703,      5.37030,      5.27076,      5.17748,      5.08963,      5.00650, $
+      4.92745,      4.85195,      4.77952,      4.70976,      4.64230,      4.57685, $
+      4.51312,      4.45090,      4.38995,      4.33013,      4.27127,      4.21323, $
+      4.15591,      4.09919,      4.04300,      3.98725,      3.93188,      3.87683, $
+      3.82205,      3.76751,      3.71315,      3.65895,      3.60487,      3.55089, $
+      3.49700,      3.44317,      3.38938,      3.33563,      3.28189,      3.22816, $
+      3.17443 ]
+    tac = [  3.23076e-05,  0.000935636,   0.00323977,     0.201574,      1.46567,      3.21735, $
+      4.31376,      5.12866,      5.78688,      6.29235,      6.67452,      6.98037, $
+      7.23085,      7.44186,      7.62236,      7.79484,      7.95604,      8.10354, $
+      8.24434,      8.37479,      8.49232,      8.85495,      9.20914,      8.70112, $
+      8.13596,      7.60048,      7.10422,      6.65097,      6.24108,      5.87285, $
+      5.54347,      5.24963,      4.98786,      4.75475,      4.54707,      4.36184, $
+      4.19635,      4.04818,      3.91516,      3.79538,      3.68714,      3.58896, $
+      3.49955,      3.41777,      3.34262,      3.27323,      3.20887,      3.14886, $
+      3.09263,      3.03970,      2.98961,      2.94200,      2.89654,      2.85294, $
+      2.81096,      2.77037,      2.73100,      2.69268,      2.65526,      2.61862, $
+      2.58266,      2.54728,      2.51241,      2.47796,      2.44389,      2.41013, $
+      2.37664,      2.34338,      2.31032,      2.27742,      2.24466,      2.21202, $
+      2.17947,      2.14700,      2.11459,      2.08223,      2.04990,      2.01761, $
+      1.98533 ]
+
+    frameNr= n_elements(t0)
+    ; tstart = 30
+    ; tstop  = 90 
+    output = double(fltarr(12))   ; 3+3+6
+    debug  = 10
+    llsq_model = 0
+    isweight = 1
+    ; weights = fltarr(frameNr) + 1.0
+    weights = (t1-t0)/total(t1-t0)
+    ; directbp = 1
+    def_pmin = [0.0,0.00001,0.0]
+    def_pmax = [5.0,10.0,1.0]  
+    fVb = 0.0     ; fix Vb to 0 as plasma presented
+    doSD = 1
+    doCL = 0
+    bootstrapIter = 200  ; has to be larger than 100!
+    matrix = double(fltarr(bootstrapIter*4)) ; change with num_param
+
+    patlog = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
+    success = call_external(patlog, 'mbf_idl', long(frameNr), double(t0), double(t1), double(tac), $
+                    double(ctt),output,long(debug), $
+                    long(isweight),double(weights),double(def_pmin),double(def_pmax), $
+                    double(fVb),long(doSD),long(doCL), $
+                    long(bootstrapIter),matrix) 
+
+    print, output
+    ; K1,k2,Vb,wss,aic,sd[k1],sd[k2],sd[vb]
+    ; print, 'True k1 k2' + nistring(0.12) + nistring(0.2)
+  end
+
+
+
+
+  'pCT' : begin
+    dt       = 1    ; %s
+    addskull = 1
+    tstart   = 0 ; %s
+    tstop    = 49 ; %s
+    frameNr = (tstop-tstart)/dt+1
+    t = indgen(frameNr)*dt;     ;0:1:49
+    to = indgen(25)*2 +1  ;1:2:49;
+    aifs = [0, 0, 0, 0, 25, 105, 220, 350, 440, 485, 430, 300, 180, 110, 104, 108, 115, 125, 115, 108, 98, 90, 98, 108, 112];
+    ts = indgen(tstop*10+1)*0.1   ;0:0.1:49;
+    aif = interpol(float(aifs),to,ts, /spline);
+    
+    cbf = 30
+    mtt = 10
+    tac = double(fltarr(n_elements(ts)))
+    lib = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
+    success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),tac)
+
+
+    debug = 10
+    isweight = 1
+    weights = fltarr(n_elements(ts))+1.0
+    def_pmin = [0.0,0.00001]     ; cbf, mtt; cbv and ttp are calculated 
+    def_pmax = [100.0,100.0]  
+    doSD = 1
+    doCL = 0
+    bootstrapIter = 200  ; has to be larger than 100!
+    matrix = double(fltarr(bootstrapIter*2)) ; change with num_param
+    output = double(fltarr(6))
+    success = call_external(lib,'pCT_idl',long(n_elements(ts)),double(ts),double(tac), $
+                    double(aif),output,long(debug),$
+                    long(isweight),double(weights),double(def_pmin),double(def_pmax), $
+                    long(doSD),long(doCL), $
+                    long(bootstrapIter),matrix) 
+  
+
+    cbv = cbf*mtt/60;
+    ttp = where(tac eq max(tac));
+    print, output,' ', cbv,' ', ttp
+
+
+  end
+
+
+
 
 
 

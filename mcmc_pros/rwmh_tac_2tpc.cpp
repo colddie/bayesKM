@@ -21,13 +21,7 @@
 /*
  * RWMH with simple normal model
  */
-
-#include "mcmc.hpp"
-#include "tpccm.h"
-#include "sim2cm.c"
-#include "simrtcm.c"
-// #include "simPatlak.c"
-// #include "simLogan.c"
+#include "rwmh_tac_2tpc.h"
 #include <iostream>
 #include <armadillo>
 #include <dlfcn.h>
@@ -158,6 +152,11 @@ double simC2_main_rwmh(const arma::vec& vals_inp, void* ll_data)
                 // rett=simLogan(nsample,vals_inp(0),vals_inp(1),plasma_t,plasma_t1,tstart,tstop,results,0, k2);
                 }     
     
+    if (dta->model == 7) {
+        rett = simpct(plasma_t,plasma_c,nsample,vals_inp(0),vals_inp(1), results);
+    }
+
+
     arma::vec result1(nsample);
     for (int i=0; i < nsample; i++)
     {
@@ -263,6 +262,10 @@ double simC2_main_hmc(const arma::vec& vals_inp, arma::vec* grad_out, void* ll_d
                 // rett=simLogan(nsample,vals_inp(0),vals_inp(1),plasma_t,plasma_t1,tstart,tstop,results,0, k2);
                 } 
 
+    if (dta->model == 7) {
+         rett = simpct(plasma_t,plasma_c,nsample,vals_inp(0),vals_inp(1), results);
+    }
+
     arma::vec result1(nsample);
     for (int i=0; i < nsample; i++)
     {
@@ -311,7 +314,7 @@ extern "C" int rwmh_tac_2tpc(int argc, float * argv[])
     dta.model = usemodel;
 
     // fix last parameter
-    if (dta.model == 1 || dta.model == 5 || dta.model == 6) { dta.nparams = 2; };
+    if (dta.model == 1 || dta.model == 5 || dta.model == 6 || dta.model == 7) { dta.nparams = 2; };
     if (dta.model == 2 || dta.model == 3 || dta.model == 4) { dta.nparams = 4; };
 
     double *x_dta = (double *)argv[1];

@@ -17,31 +17,40 @@ MCMC_TEST_DIR = .
 # general flags
 LDFLAGS = -shared
 CXXFLAGS = -fPIC -fopenmp $(CXX_STD) $(OPT_FLAGS) -I$(ARMA_INCLUDE_PATH) -I$(MCMC_HEADER_DIR)
-LIBS= -L/home/tsun/bin/mcmc-master/install/lib -lmcmc /cm/shared/apps/openblas/0.2.20/lib/libopenblas.so
+LIBS= -L/home/tsun/bin/mcmc-master/install/lib -ldl -lmcmc /cm/shared/apps/openblas/0.2.20/lib/libopenblas.so
 
-TARGET = rwmh_tac
+
 # Optim Test Files
 # SOURCES_MCMC := rwmh_tac.cpp  # $(shell find $(MCMC_TEST_DIR) -name '*.cpp')
 
-sim1cm.o: sim1cm.c tpccm.h 
-sim2cm.o: sim2cm.c tpccm.h 
-simrtcm.o: simrtcm.c tpccm.h 
-# $(TARGET).o: rwmh_tac_1tpc.cpp rwmh_tac_2tpc.cpp
-OBJECTS_MCMC := rwmh_tac_1tpc.o rwmh_tac_2tpc.o sim1cm.o sim2cm.o simrtcm.o #$(addprefix $(MCMC_TEST_DIR)/,$(SOURCES_MCMC:%.cpp=%.test))
+SRC = $(wildcard *.cpp)
+OBJ = $(src:.cxx=.o)
 
-all: lib$(TARGET).so lib$(TARGET).a  #$(TARGET)  #$(addprefix $(MCMC_TEST_DIR)/,$(SOURCES_MCMC:%.cpp=%.test))    ##
+TARGET = rwmh_tac
+
+# $(TARGET): $(OBJ)
+# 	$(CXX) $(CXXFLAGS) -o  $@ $^ $(SRC) $(LIBS) 
+	
+#sim1cm.o: sim1cm.c tpccm.h 
+#sim2cm.o: sim2cm.c tpccm.h 
+#simrtcm.o: simrtcm.c tpccm.h 
+#simpct.o:
+# $(TARGET).o: rwmh_tac_1tpc.cpp rwmh_tac_2tpc.cpp
+#OBJECTS_MCMC := rwmh_tac_1tpc.o rwmh_tac_2tpc.o sim1cm.o sim2cm.o simrtcm.o #$(addprefix $(MCMC_TEST_DIR)/,$(SOURCES_MCMC:%.cpp=%.test))
+
+#all: lib$(TARGET).so lib$(TARGET).a  #$(TARGET)  #$(addprefix $(MCMC_TEST_DIR)/,$(SOURCES_MCMC:%.cpp=%.test))    ##
 
 # # core Optim files
 # $(MCMC_TEST_DIR)/%.test: $(MCMC_TEST_DIR)/%.cpp 
 # 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS)
 
 # models in a library                 ##
-lib$(TARGET).a : ${OBJECTS_MCMC}
-	${AR} -r $@ ${OBJECTS_MCMC}
+# lib$(TARGET).a : ${OBJ}
+# 	${AR} -r $@ ${OBJ}
 
-lib$(TARGET).so : ${OBJECTS_MCMC}
-	$(CXX) $(CXXFLAGS) ${LDFLAGS} -o lib$(TARGET).so ${OBJECTS_MCMC} $(LIBS)   
-	## -o $@ ${OBJECTS_MCMC}
+lib$(TARGET).so : ${OBJ}
+	$(CXX) $(CXXFLAGS) ${LDFLAGS} -o lib$(TARGET).so ${OBJ} $(SRC) $(LIBS)   
+	# -o $@ ${OBJECTS_MCMC}
 
 # $(TARGET): ${OBJECTS_MCMC}
 # 	$(CXX) $(CXXFLAGS) -o $(TARGET) ${OBJECTS_MCMC} $(LIBS)

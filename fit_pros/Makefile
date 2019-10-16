@@ -28,7 +28,7 @@ LIBS= -L/home/tsun/bin/tpcclib-master/build/lib  /home/tsun/bin/armadillo-9.400.
 
 
 SRC = $(wildcard *.cxx)
-OBJ = $(src:.cxx=.o)
+OBJ = $(src:.cpp=.o)
 
 TARGET = testOptim
 

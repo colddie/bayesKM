@@ -1,0 +1,14 @@
+Hi Johan
+The attached file contains 151 4x4 pose matrices from a rat study where the rat's head was moving quite a bit. It can be read in IDL with
+
+IDL> a=fltarr(4,4,151)
+IDL> openr,1,'rat_pose_data_5s.dat'
+IDL> readu,1,a
+IDL> close,1
+
+The first pose can be ignored. It is just the average pose of the head during the entire study (10min or so). The remaining 150 poses are consecutive pose measurements in microPET scanner coordinates at 30ms intervals over a period of 5s. 
+
+I hope you are able to use these data. I will be every interested to see the results you get!
+
+Regards,
+Roger

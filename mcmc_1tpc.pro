@@ -2,37 +2,71 @@
 test = 0
 debug = 0
 
-pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/'
-; restore,filename='img.sav'
-; restore,filename='img_noise.sav'
-; restore, filename= 'actimg_1comp_noise_turku.sav'
-; img = niread_nii('actimg_1comp.nii', orientation='RAS')
-; img = niread_nii('actimg_fdg.nii', orientation='RAS')
-; img = niread_nii('actimg_wayformcmc.nii', orientation='RAS')
-; img = niread_nii('actimg_waybound.nii', orientation='RAS')
-; img = niread_nii('actimg_way_0.3_0.01_noise.nii', orientation='RAS')
-; img = niread_nii('actimg_way_0_0.005_noise.nii', orientation='RAS')
-; img = niread_nii('actimg_way.nii', orientation='RAS')
-; img = niread_nii('actimg_waysrtm.nii', orientation='RAS')
-; img = niread_nii('actimg_wayC2.nii', orientation='RAS')
-; img = niread_nii(pad+'actimg_fluropirdizeC1.nii', orientation='RAS')
-img = niread_nii(pad+'actimg_fluropirdizeC1_0.00000_0.00500000_noise.nii', orientation='RAS')
-; img = niread_nii('actimg_waysrtm.nii', orientation='RAS')
-; img = niread_nii('actimg_wayC2_0_0.005_noise.nii', orientation='RAS')
-; restore,filename='actimg_way.sav'
-; img=tmpimg
-restore,filename=pad+'mask.sav'
+if 0 then begin
 
-; plasma_t = [0.166667,0.283333,0.366667,0.466667,0.550000,0.616667,0.716667,0.833333,0.950000,1.06667,1.18333,1.31667,1.46667,1.60000,1.78333,1.95000,3.70000,6.76667,11.8833,20.1167,32.0333,45.5833,57.8333]
-; plasma_c = [0.00000,0.00000,0.00000,0.0375032,0.331662,0.474564,0.592856,0.416336,0.0932330,0.0784635,0.0513207,0.0438369,0.0386417,0.0339184,0.0288506,0.0261968,0.0188040,0.0222774,0.0185163,0.0176231,0.0123044,0.00832840,0.00534190]
-tmp = read_ascii(pad+'plasma_t.txt')
-plasma_t = reform(tmp.FIELD1,n_elements(tmp.FIELD1),1) 
-plasma_t = plasma_t[0:(size(img))[4]-1]
-tmp = read_ascii(pad+'plasma_c.txt')
-; tmp = read_ascii('ref_tissuec.txt')
-plasma_c = reform(tmp.FIELD1,n_elements(tmp.FIELD1),1) 
-plasma_c = plasma_c[0:(size(img))[4]-1]
-plasma_c[0] = 0.
+  pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/'
+  ; restore,filename='img.sav'
+  ; restore,filename='img_noise.sav'
+  ; restore, filename= 'actimg_1comp_noise_turku.sav'
+  ; img = niread_nii('actimg_1comp.nii', orientation='RAS')
+  ; img = niread_nii('actimg_fdg.nii', orientation='RAS')
+  ; img = niread_nii('actimg_wayformcmc.nii', orientation='RAS')
+  ; img = niread_nii('actimg_waybound.nii', orientation='RAS')
+  ; img = niread_nii('actimg_way_0.3_0.01_noise.nii', orientation='RAS')
+  ; img = niread_nii('actimg_way_0_0.005_noise.nii', orientation='RAS')
+  ; img = niread_nii('actimg_way.nii', orientation='RAS')
+  ; img = niread_nii('actimg_waysrtm.nii', orientation='RAS')
+  ; img = niread_nii('actimg_wayC2.nii', orientation='RAS')
+  ; img = niread_nii(pad+'actimg_fluropirdizeC1.nii', orientation='RAS')
+  img = niread_nii(pad+'actimg_fluropirdizeC1_0.00000_0.00500000_noise.nii', orientation='RAS')
+  ; img = niread_nii('actimg_waysrtm.nii', orientation='RAS')
+  ; img = niread_nii('actimg_wayC2_0_0.005_noise.nii', orientation='RAS')
+  ; restore,filename='actimg_way.sav'
+  ; img=tmpimg
+  restore,filename=pad+'mask.sav'
+  
+  ; plasma_t = [0.166667,0.283333,0.366667,0.466667,0.550000,0.616667,0.716667,0.833333,0.950000,1.06667,1.18333,1.31667,1.46667,1.60000,1.78333,1.95000,3.70000,6.76667,11.8833,20.1167,32.0333,45.5833,57.8333]
+  ; plasma_c = [0.00000,0.00000,0.00000,0.0375032,0.331662,0.474564,0.592856,0.416336,0.0932330,0.0784635,0.0513207,0.0438369,0.0386417,0.0339184,0.0288506,0.0261968,0.0188040,0.0222774,0.0185163,0.0176231,0.0123044,0.00832840,0.00534190]
+  tmp = read_ascii(pad+'plasma_t.txt')
+  plasma_t = reform(tmp.FIELD1,n_elements(tmp.FIELD1),1) 
+  plasma_t = plasma_t[0:(size(img))[4]-1]
+  tmp = read_ascii(pad+'plasma_c.txt')
+  ; tmp = read_ascii('ref_tissuec.txt')
+  plasma_c = reform(tmp.FIELD1,n_elements(tmp.FIELD1),1) 
+  plasma_c = plasma_c[0:(size(img))[4]-1]
+  plasma_c[0] = 0.
+endif
+
+if 1 then begin
+  
+  pad = '/home/tsun/work/bayesKM/DynamicBrainPhantom/'
+  restore,filename=pad+'tmpsub.sav'
+  restore,filename=pad+'masksub.sav'
+  restore,filename=pad+'baselinesub.sav'
+
+  for iframe = 0,(size(img))[4]-1 do  img[*,*,*,iframe] -= baseline     ; subtract the baseline image
+  tstart = 0 
+  tstop = 49
+  t = indgen(50)*1;     ;0:1:49
+  to = indgen(25)*2 +1  ;1:2:49;
+  ts = indgen(tstop*10+1)*0.1 
+    
+  ; plasma_t = [0.166667,0.283333,0.366667,0.466667,0.550000,0.616667,0.716667,0.833333,0.950000,1.06667,1.18333,1.31667,1.46667,1.60000,1.78333,1.95000,3.70000,6.76667,11.8833,20.1167,32.0333,45.5833,57.8333]
+  ; plasma_c = [0.00000,0.00000,0.00000,0.0375032,0.331662,0.474564,0.592856,0.416336,0.0932330,0.0784635,0.0513207,0.0438369,0.0386417,0.0339184,0.0288506,0.0261968,0.0188040,0.0222774,0.0185163,0.0176231,0.0123044,0.00832840,0.00534190]
+  tmp = read_ascii(pad+'plasma_t.txt')
+  plasma_t = reform(tmp.FIELD1,n_elements(tmp.FIELD1),1) 
+  plasma_t = plasma_t[0:n_elements(ts)-1]
+  tmp = read_ascii(pad+'plasma_c.txt')
+  ; tmp = read_ascii('ref_tissuec.txt')
+  plasma_c = reform(tmp.FIELD1,n_elements(tmp.FIELD1),1) 
+  plasma_c = plasma_c[0:n_elements(ts)-1]
+  plasma_c[0] = 0.
+
+endif
+
+
+
+
 nsample = n_elements(plasma_t)
 ; weight = total(total(total(img,1),1),1) / total(img)*nsample   ; ought to be duration but we infer that from the image in simulation
 ; weight   = (dta->weight)[i]	=  (dta->tissue_c)[i]/arma::accu(dta->tissue_c)*nsample;
@@ -40,7 +74,7 @@ nsample = n_elements(plasma_t)
 weight = (plasma_t -shift(plasma_t,1)) / plasma_t[n_elements(plasma_t)-1] * nsample
 weight[0] = 0.
 ; weight = fltarr(nsample) + 1.
-model = 1L   ; 1,2,3
+model = 7L   ; 1,2,3
 tracer = 'fluropirdize'   ; 'way','fdg', 'fluropirdize', 'fdopa'
 mcmc = 0L;  rwmh, hmc
 useprior = 0LL
@@ -100,6 +134,17 @@ case model of
       ub = [2., 1., 0.5, 0.1]
     endif
   end
+
+
+  ; 5,6: begin
+  ; end
+
+  7: begin ;CBF, MTT
+      initialK = [30., 10.]            
+      lb = [0., 0.]
+      ub = [100., 100.]    ;[2., 4.]     
+  end
+    
 endcase
 
 
@@ -108,10 +153,10 @@ endcase
 initialK = double(initialK)
 lb = double(lb)
 ub = double(ub)
-rwmh_par_scale = double(0.06) 
+rwmh_par_scale = double(0.0006)    ; was 0.06 for 1tpc 
 hmc_step_size  = double(0.001)
 rwmh_n_burnin  = 10000L *2          ; ?
-rwmh_n_draws   = 100L 
+rwmh_n_draws   = 1000L 
 output = fltarr(rwmh_n_draws, n_elements(initialK))
 prior = dblarr(n_elements(initialK))
 sens = double(1e0)
@@ -153,7 +198,8 @@ for iplane = 0, nplane-1 do begin
       iplane = 1
     endif
 
-    if mask[icol, irow, iplane] eq 0.0 then continue
+    if masksub[icol, irow, iplane] eq 0.0 then continue
+
         tissue_c = reform(img[icol,irow,iplane,*])            ;reform(img[79,126,1,*])
 
         case model of 
@@ -277,8 +323,33 @@ for iplane = 0, nplane-1 do begin
             varimg[icol,irow,iplane,2]  = stddev(output(*,2))
             varimg[icol,irow,iplane,3]  = stddev(output(*,3))
           end
-        endcase
-       
+
+                ;  5,6: begin ; patlak, logan
+         
+      ;  end
+
+        7: begin  ; perfusion CT
+            if test eq 1 then begin
+              icol=103
+              irow=151
+              iplane = 1
+            endif
+            tissue_c = reform(img[icol,irow,iplane,*])
+            tac1 =  interpol(tissue_c,t,ts, /spline);
+            success = call_external(mcmc_tac, 'rwmh_tac_2tpc', long(nsample), double(tac1), double(plasma_t), double(plasma_c), $   ; was rwmh_tac_1tpc
+                            double(weight), double(prior), output, $
+                            double(initialK), double(lb), double(ub), $
+                            rwmh_par_scale,hmc_step_size,rwmh_n_burnin,rwmh_n_draws, model,debug, mcmc,useprior,sens) 
+
+            print, mean(output(*,0)),stddev(output(*,0)),mean(output(*,1)),stddev(output(*,1))
+           
+            meanimg[icol,irow,iplane,0] = mean(output(*,0))
+            meanimg[icol,irow,iplane,1] = mean(output(*,1))
+            varimg[icol,irow,iplane,0]  = stddev(output(*,0))
+            varimg[icol,irow,iplane,1]  = stddev(output(*,1))
+        end
+
+      endcase
 
         if test then     stop
     end
