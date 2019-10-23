@@ -24,7 +24,7 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
-static const int parNr=2;
+static const int parNr=3;   // was 2
 DFT input, data;
 double *ctemeas, *ctsim;
 // static double fVb=-1.0;
@@ -51,7 +51,7 @@ int pCT_idl(int argc, char **argv)
   // int          ref=-1, refAdded=0;   // currently reference region is not enabled;
   char        *cptr, refname[FILENAME_MAX], tmp[FILENAME_MAX];
   double       fitdur=1.0E+10;
-  double       wss, aic, cbf, mtt, cbv, ttp;         // K1, k2, Vb;
+  double       wss, aic, cbf, mtt, cbv, ttp, delay;         // K1, k2, Vb;
   RES          res;
   IFT          ift;
   int          doBootstrap=0, doSD=0, doCL=0;
@@ -271,9 +271,10 @@ dftPrint(&input); }
   res.time=time(NULL);
   /* Set parameter number, including also the extra "parameters"
      and the parameter names and units */
-  res.parNr=5; 
+  res.parNr=6;    // was 5 
   pi=0; strcpy(res.parname[pi], "CBF"); strcpy(res.parunit[pi], "ml/min");
   pi++; strcpy(res.parname[pi], "MTT"); strcpy(res.parunit[pi], "sec");
+  pi++; strcpy(res.parname[pi], "delay"); strcpy(res.parunit[pi], "sec");
   pi++; strcpy(res.parname[pi], "WSS"); strcpy(res.parunit[pi], "");
   pi++; strcpy(res.parname[pi], "AIC"); strcpy(res.parunit[pi], "");
 
@@ -293,7 +294,8 @@ dftPrint(&input); }
     /* Set constraints */
     pmin[0]=def_pmin[0];    pmax[0]=def_pmax[0];   /* cbf    */
     pmin[1]=def_pmin[1];    pmax[1]=def_pmax[1];   /* mtt */
-    for(pi=fittedparNr=0; pi<parNr; pi++) if(pmax[pi]>pmin[pi]) fittedparNr++;
+    pmin[2]=def_pmin[2];    pmax[2]=def_pmax[2];   /* delay */
+    for(pi=fittedparNr=0; pi<parNr; pi++) if(pmax[pi]>pmin[pi]) { fittedparNr++; }
     if(verbose>3) {
       printf("  constraints :=");
       for(pi=0; pi<parNr; pi++) printf(" [%g,%g]", pmin[pi], pmax[pi]);
@@ -381,6 +383,7 @@ dftPrint(&input); }
     /* Calculate Ki, lambda*k3, and k3/(k2+k3) */
     cbf=res.voi[ri].parameter[0];
     mtt=res.voi[ri].parameter[1];
+    delay=res.voi[ri].parameter[2];
 
     /* done with this region */
     // if(data.voiNr>2 && verbose==1) {fprintf(stdout, ".");}
@@ -391,10 +394,11 @@ dftPrint(&input); }
 if(verbose>0) {printf( "\n");   resPrint(&res);}
   output[0] = cbf;     // see below
   output[1] = mtt;
-  output[2] = wss;
-  output[3] = aic;
+  output[2] = delay;     
+  output[3] = wss;
+  output[4] = aic;
 
-  if(doSD) {output[4] = res.voi[0].sd[0];output[5] = res.voi[0].sd[1]; }
+  if(doSD) {output[5] = res.voi[0].sd[0];output[6] = res.voi[0].sd[1]; output[7] = res.voi[0].sd[2];  }
 
   resEmpty(&res);
   dftEmpty(&data);
@@ -425,7 +429,7 @@ double pctFunc(int parNr, double *p, void *fdata)
   // if(fVb>0.0) Vb=fVb; else Vb=pa[2];
 
   /* Simulate the tissue CT TAC */
-  ret = simpct(input.x,input.voi[0].y,input.frameNr,pa[0],pa[1],ctsim);
+  ret = simpct(input.x,input.voi[0].y,input.frameNr,pa[0],pa[1],pa[2],ctsim);
 
 
   if(ret) {

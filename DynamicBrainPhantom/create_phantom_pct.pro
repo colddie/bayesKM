@@ -30,6 +30,7 @@ nrow     = 256
 nplane   = 256
 tstart   = 0 ; %s
 tstop    = 49 ; %s
+delay    = 0
 
 ; % define perfusion parameters for different matters
 ; % gm -> gray matter wm -> white matter
@@ -39,30 +40,41 @@ tstop    = 49 ; %s
 ; % cbv in ml/100ml  cbf in ml/100 ml/min  mtt in seconds
 gm_cbv = 3.3
 gm_cbf = 53; 
-gm_mtt = (gm_cbv/gm_cbf)*60;   
+gm_mtt = (gm_cbv/gm_cbf)*60;
+gm_delay = 0.0;   
 gmr_cbv = 3;
 gmr_cbf = 16;
-gmr_mtt = (gmr_cbv/gmr_cbf)*60;  
+gmr_mtt = (gmr_cbv/gmr_cbf)*60; 
+gmr_delay = 1.0;    
 gmsr_cbv = 0.71;
 gmsr_cbf = 5.3;
 gmsr_mtt = (gmsr_cbv/gmsr_cbf)*60;   
+gmsr_delay = 3.0;   
 
 wm_cbv = 1.9;
 wm_cbf = 25;
-wm_mtt = (wm_cbv/wm_cbf)*60;   
+wm_mtt = (wm_cbv/wm_cbf)*60;  
+wm_delay = 0.0;    
 wmr_cbv = 1.7;   
 wmr_cbf = 7.5; 
 wmr_mtt = (wmr_cbv/wmr_cbf)*60;    
+wmr_delay = 2.0;   
 wmsr_cbv = 0.42;
 wmsr_cbf = 2.5;
 wmsr_mtt = (wmsr_cbv/wmsr_cbf)*60;  
+wmsr_delay = 4.0;   
+
 ; % define perfusion parameter variation w.r.t. mr data
-    cbf_var = 14;
-    mtt_var = 0.7;  
-    cbfr_var = 4.25;
-    mttr_var = 0.75;
-    cbfsr_var = 1.4;
-    mttsr_var = 1;                    
+cbf_var = 14;
+mtt_var = 0.7;  
+cbfr_var = 4.25;
+mttr_var = 0.75;
+cbfsr_var = 1.4;
+mttsr_var = 1;   
+delay_var = 0.0
+delayr_var = 0.5
+delaysr_var = 1.0     
+
 ; % tissue attenuation offsets
 HU_GM = 35
 HU_WM = 29
@@ -74,21 +86,21 @@ HU_CSF_VAR = 3;
 ; % classes of tissue
 GM = 1
 WM = 2
-GMR = 3
-GMSR = 4
+GMR = 3          ; reduced
+GMSR = 4        ; severely reduced
 WMR = 5
 WMSR = 6
 AI = 7
 VO = 8
 CSF = 9
-HEGM = 10
-HEWM = 11
+HEGM = 11     ;;;??? matlab generate phantom with wrong index!
+HEWM = 10
 
 ; % load brain maps
 ; brain.mat not found! create stroke annotation with strokecreator before running create_phantom!
 ; brain = readraw('brain.raw',ncol,nrow,nplane,'byte')
-load_mat,'brain.mat'
-restore,filename='brain.sav'
+load_mat,'brain.mat', store_level=-1
+; restore,filename='brain.sav'
 brain = byte(brain)
 brain[where(brain eq HEWM)] = WM;
 brain[where(brain eq HEGM)] = GM;
@@ -114,6 +126,7 @@ tacall = fltarr(ncol,nrow,nplane,nframe)
 cbfall = float(brain) *0
 cbvall = float(brain) *0
 mttall = float(brain) *0
+delayall = float(brain) *0
 ttpall = float(brain) *0
 
 
@@ -125,11 +138,13 @@ for z=0,nplane-1 do begin
   mtt =0
   cbv =0
   ttp =0
+  delay =0
   baselineslice = fltarr(ncol,nrow)
   tacslice = fltarr(ncol,nrow,nframe)
   cbfslice = baselineslice *0
   cbvslice = baselineslice *0
   mttslice = baselineslice *0
+  delayslice = baselineslice *0
   ttpslice = baselineslice *0
   mrslice = mrbrain[*,*,z]
   brainslice = brain[*,*,z]
@@ -154,21 +169,24 @@ for z=0,nplane-1 do begin
         WM: begin
             cbf = wm_cbf - mrvalues[i]*cbf_var;
             mtt = wm_mtt + mrvalues[i]*mtt_var;
+            delay = wm_delay + mrvalues[i]*delay_var
         end
         WMR: begin
             cbf = wmr_cbf - mrvalues[i]*cbfr_var;
             mtt = wmr_mtt + mrvalues[i]*mttr_var;
+            delay = wmr_delay + mrvalues[i]*delayr_var           
         end
         WMSR: begin
             cbf = wmsr_cbf - mrvalues[i]*cbfsr_var;
             mtt = wmsr_mtt + mrvalues[i]*mttsr_var; 
+            delay = wmsr_delay + mrvalues[i]*delaysr_var
         end
       endcase
 
         ; tac = GetTissueTac(aif,ts,0.1,mtt,cbf);
         tac = double(fltarr(n_elements(ts)))
         lib = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-        success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),tac)
+        success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),double(delay),tac)
         for ti = 0,nframe-1 do begin
             tac_index = round(t[ti]/0.1) ;+ 1;
             sliceposition = array_indices(baselineslice,idx);
@@ -179,6 +197,7 @@ for z=0,nplane-1 do begin
         cbfslice[idx] = cbf;
         cbvslice[idx] = cbf*mtt/60;
         mttslice[idx] = mtt;
+        delayslice[idx] = delay;
         ttp = where(tac eq max(tac));
         ; [~, ttp] = max(tac); 
         ttpslice[idx] = ttp*0.1;
@@ -205,21 +224,24 @@ for z=0,nplane-1 do begin
         GM: begin
             cbf = gm_cbf - mrvalues[i]*cbf_var;
             mtt = gm_mtt + mrvalues[i]*mtt_var;
+            delay = gm_delay + mrvalues[i]*delay_var
         end
         GMR: begin
             cbf = gmr_cbf - mrvalues[i]*cbfr_var;
             mtt = gmr_mtt + mrvalues[i]*mttr_var;
+            delay = gmr_delay + mrvalues[i]*delayr_var
         end
         GMSR: begin
             cbf = gmsr_cbf - mrvalues[i]*cbfsr_var;
             mtt = gmsr_mtt + mrvalues[i]*mttsr_var; 
+            delay = wmsr_delay + mrvalues[i]*delaysr_var
         end
       endcase
 
         ; tac = GetTissueTac(aif,ts,0.1,mtt,cbf);
         tac = double(fltarr(n_elements(ts)))
         lib = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-        success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),tac)
+        success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),double(delay),tac)
         for ti = 0,nframe-1 do begin
             tac_index = round(t[ti]/0.1) ;+ 1;
             sliceposition = array_indices(baselineslice,idx);
@@ -229,6 +251,7 @@ for z=0,nplane-1 do begin
         cbfslice[idx] = cbf;
         cbvslice[idx] = cbf*mtt/60;
         mttslice[idx] = mtt;
+        delayslice[idx] = delay;
         ttp = where(tac eq max(tac));
         ; [~, ttp] = max(tac); 
         ttpslice[idx] = ttp*0.1;
@@ -255,7 +278,7 @@ for z=0,nplane-1 do begin
   
   
 
-  ;    % process csf
+  ; % Process csf
   csf_idx = where(brainslice eq CSF)
   if n_elements(csf_idx) gt 1 then begin
         mrvalues = mrslice[csf_idx];
@@ -293,6 +316,7 @@ for z=0,nplane-1 do begin
     cbfall[*,*,z]=cbfslice
     cbvall[*,*,z]=cbvslice
     mttall[*,*,z]=mttslice
+    delayall[*,*,z]=delayslice
     ttpall[*,*,z]=ttpslice
 
     ; if n_elements(where(cbfslice gt 0.0)) gt 1 then stop
@@ -302,6 +326,7 @@ endfor
 
 
 stop
+save,filename='tmp_delay.sav', cbfall,tacall,mttall,baselineall,delayall
 
 
 ; plasma_t, plasma_c
@@ -317,9 +342,12 @@ stop
 ; create mask image
 mask[where(cbfall gt 0.0)] = 1.0
 mask1=morph_close(mask,replicate(1,5,5,5))
-masksub=mask1[*,*,153:157]  
+masksub=mask[*,*,153:157]
+delaysub=delayall[*,*,153:157]
+baselinesub=baselineall[*,*,153:157]
+img=tacall[*,*,153:157,*]
 
-
+save,filename='tmpsub_delay.sav',masksub,baselinesub,delaysub,img
 
 stop
 

@@ -46,6 +46,7 @@ int simpct_idl(int argc, float * argv[])
   int    frameNr;
   double cbf;
   double mtt;
+  double delay;
   double *tac;
 
   /* read in parameters */	
@@ -54,15 +55,17 @@ int simpct_idl(int argc, float * argv[])
   frameNr       =  *(int *)      argv[2];
   cbf           =  *(double *)   argv[3];
   mtt           =  *(double*)    argv[4];
-  tac           =  (double *)    argv[5];
+  delay         =  *(double*)    argv[5];
+  tac           =  (double *)    argv[6];
 
   cbf         = cbf/6000.0;              //% ml/100ml/min = 1/(100*60s)
   double  data[frameNr];
   int     n = frameNr;
   int     m = frameNr;
   for (int i=0;i<n;i++) { 
-    data[i]=cbf*exp( -(ts[i]-mtt)); 
-    if (ts[i] < mtt) { data[i] = cbf; }
+    data[i]=cbf*exp( -(ts[i]-mtt-delay)); 
+    if (ts[i] < mtt+delay) { data[i] = cbf; }
+    if (ts[i] < delay) { data[i] = 0.0; }    // !
     }
 
   if(n<1 || m<1 || data==NULL || ctt==NULL || tac==NULL || tac==data) { return 1; }

@@ -14,6 +14,7 @@ compartment = 'C1'    ; 'C1', 'srtm', 'rtcm'
 bound = 0.05*0             ; high the high variance in Ks
 tacnoiselevel = 0.005     ; higher the high noise
 nframe = 158
+rebin_fac = 0.5
 fwhm = 5.0
 
 case tracer of 
@@ -235,7 +236,7 @@ case tracer of
 
 endcase
 
-stop
+; stop
 
 
   ; plasma_t = $
@@ -269,8 +270,13 @@ stop
   Free_Lun, lun
   plasma_t = (data.plasma_t)[0:nframe-1]   ; truncate equilibrium
   plasma_c = (data.plasma_c)[0:nframe-1]
-  plasma_t = rebin(plasma_t,n_elements(plasma_t)/2)
-  plasma_c = rebin(plasma_c,n_elements(plasma_c)/2)
+  plasma_t = rebin(plasma_t,n_elements(plasma_t)/rebin_fac)
+  plasma_c = rebin(plasma_c,n_elements(plasma_c)/rebin_fac)
+
+tosave=pad+tracer+compartment+'rebin'+nistring(rebin_fac)
+file_mkdir, tosave
+cd, tosave
+
 
   if compartment eq 'srtm' or compartment eq 'rtcm' then begin
     tmp = read_ascii('ref_tissuec.txt')
@@ -348,7 +354,9 @@ for iplane = 82, 83 do begin;nplane-1 do begin
         ; modify them
         ;-------------------
         if fromphantom then begin
-            parms = [phantomK1[icol,irow,iplane],phantomk2[icol,irow,iplane],phantomk3[icol,irow,iplane],phantomk4[icol,irow,iplane],phantomm[icol,irow,iplane]]
+            parms = [phantomK1[icol,irow,iplane],phantomk2[icol,irow,iplane], $
+                     phantomk3[icol,irow,iplane],phantomk4[icol,irow,iplane], $
+                     phantomm[icol,irow,iplane]]
         endif else $
             call_procedure, modeldef, 'start_parms', parms
 
@@ -383,15 +391,15 @@ for iplane = 82, 83 do begin;nplane-1 do begin
         endif
         
         tissue_cc = double(plasma_c *0)
+        if compartment eq 'C1' then $
+          dummy = call_external('libtpccm.so', 'simC1_idl', double(plasma_t), double(plasma_c), fix(n_elements(plasma_t)), $
+                              double(parms[0]),double(parms[1]), tissue_cc,return_type=2,/verbose)
+
         if compartment eq 'C2' then $
           dummy = call_external('libtpccm.so', 'simC2_idl', double(plasma_t), double(plasma_c), fix(n_elements(plasma_t)), $
                               double(parms[0]),double(parms[1]),double(parms[2]),double(parms[3]), tissue_cc,return_type=2,/verbose)
           ; ret=simC2(input.x, input.c[0].y, input.sampleNr, 0.4, 0.5, 0.4, 0.3, 
           ;   tissue.c[0].y, NULL, NULL);
-         
-        if compartment eq 'C1' then $
-          dummy = call_external('libtpccm.so', 'simC1_idl', double(plasma_t), double(plasma_c), fix(n_elements(plasma_t)), $
-                              double(parms[0]),double(parms[1]), tissue_cc,return_type=2,/verbose)
 
         if compartment eq 'srtm' then $
           dummy = call_external('libtpccm.so', 'simSRTM_idl', double(plasma_t), double(plasma_c), fix(n_elements(plasma_t)), $
@@ -424,9 +432,53 @@ endfor
 tmpimg = imgall[*,*,82:83,*]
 mask = niread_nifti(pad+'mask.nii')
 for i=0,n_elements(plasma_c)-1 do tmpimg[*,*,*,i] *= mask
-padname = pad+'actimg_'+ tracer+compartment 
+padname = tosave+'/'+'actimg_'+ tracer+compartment
 save, filename= padname +'.sav', tmpimg
 help,niwrite_nii(tmpimg, padname +'.nii')
+
+
+; write the plasma_t.txt and plasma_c.txt
+if compartment eq 'C1' or compartment eq 'C2' then begin
+  fname= tosave+'/'+'plasma_t.txt'
+  OPENW,1,fname 
+  PRINTF,1,plasma_t
+  CLOSE,1
+  fname= tosave+'/'+'plasma_c.txt'
+  OPENW,1,fname 
+  PRINTF,1,plasma_c
+  CLOSE,1
+
+  fname = padname +'.nii' ; pad+'_'+nistring(bound)+'_'+nistring(tacnoiselevel)+'_noise.nii'
+  mask = phantom *0
+  mask[where(phantom eq 1)] = 1.0
+  mask=mask[*,*,82:83]
+  img = niread_nii(fname,orientation='RAS') 
+  tissue_c = fltarr(n_elements(plasma_t))
+  for ip = 0, n_elements(plasma_t)-1 do begin
+    tmp = img[*,*,*,ip] * mask
+    tissue_c[ip] = mean(tmp[where(tmp gt 0.)])
+  endfor
+  fname = tosave+'/'+'ref_tissuec.txt'
+  OPENW,1,fname 
+  PRINTF,1,tissue_c
+  CLOSE,1
+
+  ; ; write the interpolated plasma_t.txt and plasma_c.txt
+  ; plasma_tt = congrid(plasma_t,2*n_elements(plasma_t))
+  ; plasma_cc = interpol(float(plasma_c),plasma_t,plasma_tt, /spline);
+
+  ; fname= pad+'plasma_tt.txt'
+  ; OPENW,1,fname 
+  ; PRINTF,1,plasma_tt
+  ; CLOSE,1
+  ; fname= pad+'plasma_cc.txt'
+  ; OPENW,1,fname 
+  ; PRINTF,1,plasma_cc
+  ; CLOSE,1
+
+endif
+
+
 
 
 
@@ -434,6 +486,7 @@ help,niwrite_nii(tmpimg, padname +'.nii')
 plasma_t_sif = [0]
 nsample = n_elements(tissue_cc)
 ; for i = 0, nsample-1 do $
+plasma_t[0] = 0.00001
 plasma_t_sif = [plasma_t_sif, plasma_t]
 
 plasma_t_sif= [ [plasma_t_sif[0:nsample-1]], [plasma_t_sif[1:nsample]], $
@@ -442,9 +495,9 @@ plasma_t_sif= [ [plasma_t_sif[0:nsample-1]], [plasma_t_sif[1:nsample]], $
 fname= padname + '.sif' 
 OPENW,1,fname 
 PRINTF,1, '01/01/1970 00:00:00 ' + nistring(n_elements(plasma_t)) + ' 4 1 . '+isotope
-PRINTF,1,transpose(plasma_t_sif),FORMAT='(F,1X,F,1X,F7.2,1X,F7.2)' 
+PRINTF,1,transpose(plasma_t_sif),FORMAT='(F,1X,F,1X,I9,1X,F7.2)' 
 CLOSE,1
-
+stop
 
 ; insert counts based on images and then add noise
 ; imgweigh actimg_way.nii actimg_way.sif
@@ -452,7 +505,7 @@ CLOSE,1
 spawn, 'imgweigh '+padname+'.nii '+padname+'.sif' 
 spawn, 'cp ' +padname+'.sif ' +padname+ 'tmp.sif'  
 
-inputfile = pad+'tmp.sif' 
+inputfile = padname+'tmp.sif' 
 dataStruct = { plasma_t:0.0, plasma_c:0.0, weight:0L, unkown:0.0}
 nrows = File_Lines(inputfile)-1
 data = Replicate(dataStruct, nrows)
@@ -468,37 +521,12 @@ OPENW,1,fname
 PRINTF,1, '01/01/1970 00:00:00 ' + nistring(n_elements(plasma_t)) + ' 4 1 . '+isotope
 PRINTF,1,transpose(plasma_t_sif),FORMAT='(F,1X,F,1X,I9,1X,F7.2)' 
 CLOSE,1
+; check if the start and end time-stamps are identical 
 spawn, 'fvar4img -i=' +isotope+' '+padname+'.nii '+nistring(tacnoiselevel)+' '+padname+'_'+nistring(bound)+'_'+nistring(tacnoiselevel)+'_noise.nii'
 
 
 
 
-; write the plasma_t.txt and plasma_c.txt
-if compartment eq 'C1' or compartment eq 'C2' then begin
-  fname= pad+'plasma_t.txt'
-  OPENW,1,fname 
-  PRINTF,1,plasma_t
-  CLOSE,1
-  fname= pad+'plasma_c.txt'
-  OPENW,1,fname 
-  PRINTF,1,plasma_c
-  CLOSE,1
-
-  fname = padname +'.nii' ; pad+'_'+nistring(bound)+'_'+nistring(tacnoiselevel)+'_noise.nii'
-  mask = phantom *0
-  mask[where(phantom eq 1)] = 1.0
-  mask=mask[*,*,82:83]
-  img = niread_nii(fname,orientation='RAS') 
-  tissue_c = fltarr(n_elements(plasma_t))
-  for ip = 0, n_elements(plasma_t)-1 do begin
-    tmp = img[*,*,*,ip] * mask
-    tissue_c[ip] = mean(tmp[where(tmp gt 0.)])
-  endfor
-  fname = pad+'ref_tissuec.txt'
-  OPENW,1,fname 
-  PRINTF,1,tissue_c
-  CLOSE,1
-endif
 
 
 ; plot time-activity-curve
@@ -523,10 +551,15 @@ stop
 
 
 
-; validate
 
 
 
+
+
+
+
+
+;;;;;;;;;;; validate
 
 
 

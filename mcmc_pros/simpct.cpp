@@ -33,6 +33,7 @@ int simpct
     int    frameNr,
     double cbf,
     double mtt,
+	double delay,
     double *tac
 ) {
 
@@ -58,6 +59,7 @@ int simpct
   for (int i=0;i<n;i++) { 
     data[i]=cbf*exp( -(ts[i]-mtt)); 
     if (ts[i] < mtt) { data[i] = cbf; }
+	if (ts[i] < delay) { data[i] = 0.0; }    // !
     }
 
   if(n<1 || m<1 || data==NULL || ctt==NULL || tac==NULL || tac==data) return 1;

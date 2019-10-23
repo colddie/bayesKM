@@ -175,6 +175,7 @@ int simpct
     int    frameNr,
     double cbf,
     double mtt,
+	double delay,
     double *tac
 );
 

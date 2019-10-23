@@ -509,33 +509,60 @@ case testmode of
     ts = indgen(tstop*10+1)*0.1   ;0:0.1:49;
     aif = interpol(float(aifs),to,ts, /spline);
     
-    cbf = 30
-    mtt = 10
+    cbf = 20         ; too small mtt svd make underestimated cbf
+    mtt = 10       
+    delay = 5.0       ; too small svd not working
     tac = double(fltarr(n_elements(ts)))
     lib = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-    success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),tac)
+    success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),double(delay),tac)
 
 
     debug = 10
     isweight = 1
     weights = fltarr(n_elements(ts))+1.0
-    def_pmin = [0.0,0.00001]     ; cbf, mtt; cbv and ttp are calculated 
-    def_pmax = [100.0,100.0]  
-    doSD = 1
+    def_pmin = [0.0,0.0,0.0]     ; cbf, mtt; cbv and ttp are calculated 
+    def_pmax = [100.0,50.0,20.0]  
+    doSD = 0
     doCL = 0
     bootstrapIter = 200  ; has to be larger than 100!
-    matrix = double(fltarr(bootstrapIter*2)) ; change with num_param
-    output = double(fltarr(6))
+    matrix = double(fltarr(bootstrapIter*n_elements(def_pmin))) ; change with num_param
+    output = double(fltarr(8))
     success = call_external(lib,'pCT_idl',long(n_elements(ts)),double(ts),double(tac), $
                     double(aif),output,long(debug),$
                     long(isweight),double(weights),double(def_pmin),double(def_pmax), $
                     long(doSD),long(doCL), $
                     long(bootstrapIter),matrix) 
   
-
+    
+    cbf = output[0]
+    mtt = output[1]
+    delay = output[2]
     cbv = cbf*mtt/60;
     ttp = where(tac eq max(tac));
-    print, output,' ', cbv,' ', ttp
+    print, output,' ', cbv,' ', ttp/10.
+
+
+  stop
+
+  ; Apply conventional block-circulant SVD approach
+  lambda = 0.2   ; truncation
+  mpad   = 2
+  mask   = 0
+  dt    /= 1.    ; /=10.
+  first  = 0
+  last   = 200     ; depends ont mtt
+  ; tac = congrid(tac,10)
+  ; aif = congrid(aif,10)
+  pct_bsvd, tac, aif, dt, lambda, mpad, mask, $
+              cbf=cbfmap, cbv=cbvmap, mtt=mttmap,delay=delaymap,k=k,$
+              first=first,last=last
+
+  print, cbfmap, mttmap/10., cbvmap, delaymap, ttp/10.
+
+  stop 
+
+
+
 
 
   end

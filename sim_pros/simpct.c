@@ -33,6 +33,7 @@ int simpct
     int    frameNr,
     double cbf,
     double mtt,
+    double delay,
     double *tac
 ) {
 
@@ -56,10 +57,13 @@ int simpct
   int     n = frameNr;
   int     m = frameNr;
   for (int i=0;i<n;i++) { 
-    data[i]=cbf*exp( -(ts[i]-mtt)); 
-    if (ts[i] < mtt) { data[i] = cbf; }
+    data[i]=cbf*exp( -(ts[i]-mtt-delay));     // -delay
+    if (ts[i] < mtt+delay) { data[i] = cbf; }
+    if (ts[i] < delay) { data[i] = 0.0; }    // !
     }
 
+
+  // convolve ctt and data
   if(n<1 || m<1 || data==NULL || ctt==NULL || tac==NULL || tac==data) return 1;
 
   for(int di=0; di<n; di++) tac[di]=0.0;

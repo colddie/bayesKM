@@ -153,7 +153,7 @@ double simC2_main_rwmh(const arma::vec& vals_inp, void* ll_data)
                 }     
     
     if (dta->model == 7) {
-        rett = simpct(plasma_t,plasma_c,nsample,vals_inp(0),vals_inp(1), results);
+        rett = simpct(plasma_t,plasma_c,nsample,vals_inp(0),vals_inp(1),vals_inp(2), results);
     }
 
 
@@ -263,7 +263,7 @@ double simC2_main_hmc(const arma::vec& vals_inp, arma::vec* grad_out, void* ll_d
                 } 
 
     if (dta->model == 7) {
-         rett = simpct(plasma_t,plasma_c,nsample,vals_inp(0),vals_inp(1), results);
+         rett = simpct(plasma_t,plasma_c,nsample,vals_inp(0),vals_inp(1),vals_inp(2), results);
     }
 
     arma::vec result1(nsample);
@@ -314,8 +314,9 @@ extern "C" int rwmh_tac_2tpc(int argc, float * argv[])
     dta.model = usemodel;
 
     // fix last parameter
-    if (dta.model == 1 || dta.model == 5 || dta.model == 6 || dta.model == 7) { dta.nparams = 2; };
+    if (dta.model == 1 || dta.model == 5 || dta.model == 6) { dta.nparams = 2; };
     if (dta.model == 2 || dta.model == 3 || dta.model == 4) { dta.nparams = 4; };
+    if (dta.model == 7) { dta.nparams = 3; };
 
     double *x_dta = (double *)argv[1];
     arma::vec tac(nsample);
