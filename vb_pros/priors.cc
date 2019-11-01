@@ -208,10 +208,10 @@ double ImagePrior::ApplyToMVN(MVNDist *prior, const RunContext &ctx, FabberRunDa
 {
     prior->means(m_idx + 1) = m_image(ctx.v);
 
-    SymmetricMatrix prec = prior->GetPrecisions();
+	SymmetricMatrix prec = prior->GetPrecisions();
     prec(m_idx + 1, m_idx + 1) = m_params.prec();
     prior->SetPrecisions(prec);
-
+	
     return 0;
 }
 
@@ -295,6 +295,7 @@ SpatialPrior::SpatialPrior(const Parameter &p, FabberRunData &rundata)
 //////////////////////////////////
 double SpatialPrior::SetImgPrior(MVNDist *prior, MVNDist *posterior, const RunContext &ctx, FabberRunData &rundata,Parameter &param)
 {
+		LOG << "tessstt!"<<endl;
     // sptial dependent prior
     // LOG <<"test243"<<param.options.find("pmeanimg")->second;
     string m_filename = param.options.find("image")->second;
@@ -302,6 +303,17 @@ double SpatialPrior::SetImgPrior(MVNDist *prior, MVNDist *posterior, const RunCo
     prior->means(m_idx + 1) = m_image(ctx.v);
     posterior->means(m_idx+1) = m_image(ctx.v); 
 
+	// 
+    std::string stringuse_img = rundata.GetStringDefault("PSP_byname1_pimage", "");
+    bool use_img = (stringuse_img != "");
+	if (use_img) {
+      string m_filename1 = param.options.find("pimage")->second;	
+	  NEWMAT::RowVector m_image1 = rundata.GetVoxelData(m_filename1).AsRow();
+	  SymmetricMatrix precs = prior->GetPrecisions();
+      precs(m_idx + 1, m_idx + 1) = m_image1(ctx.v); 
+      prior->SetPrecisions(precs);
+      posterior->SetPrecisions(precs);
+	}
 }//////////////////////////////////
 
 
@@ -383,6 +395,13 @@ void SpatialPrior::DumpInfo(std::ostream &out) const
 
 double SpatialPrior::ApplyToMVN(MVNDist *prior, const RunContext &ctx, FabberRunData &rundata, Parameter &param)
 {
+
+// use both mean and precision prior
+if (m_type_code == PRIOR_SPATIAL_J) 
+{
+	LOG << "what?" << endl;
+  return 0;
+}
 
 
 //////////////////////////////////
@@ -537,7 +556,7 @@ if (m_type_code == PRIOR_SPATIAL_m || m_type_code == PRIOR_SPATIAL_M ||
     }
 			
 }
-else   // self-define priors
+else if (m_type_code == PRIOR_SPATIAL_n || m_type_code == PRIOR_SPATIAL_k )   // self-define priors
 {	
 		
 if (ctx.v == 1 && (ctx.it > 0 || m_update_first_iter))
@@ -700,12 +719,31 @@ if (ctx.v == 1 && (ctx.it > 0 || m_update_first_iter))
 
 double SpatialPrior::ApplyToMVN_(MVNDist *prior, const RunContext &ctx, FabberRunData &rundata,Parameter &param)
 {
-    prior->means(m_idx + 1) = m_params.mean();
+    std::string stringuse_img = rundata.GetStringDefault("PSP_byname1_image", "");
+    bool use_img = (stringuse_img != "");
+	if (use_img) {
+      string m_filename = param.options.find("image")->second;
+      NEWMAT::RowVector m_image = rundata.GetVoxelData(m_filename).AsRow();
+	  prior->means(m_idx + 1) = m_image(ctx.v); }
+	else { 
+	  prior->means(m_idx + 1) = m_params.mean();
+	}  
 
-    SymmetricMatrix prec = prior->GetPrecisions();
-    prec(m_idx + 1, m_idx + 1) = m_params.prec();
-    prior->SetPrecisions(prec);
-
+	std::string stringuse_img1 = rundata.GetStringDefault("PSP_byname1_pimage", "");
+    bool use_img1 = (stringuse_img1 != "");
+	if (use_img1) { 
+      string m_filename1 = param.options.find("pimage")->second;	
+	  NEWMAT::RowVector m_image1 = rundata.GetVoxelData(m_filename1).AsRow();
+	  SymmetricMatrix precs = prior->GetPrecisions();
+      precs(m_idx + 1, m_idx + 1) = m_image1(ctx.v); 
+      prior->SetPrecisions(precs);
+      posterior->SetPrecisions(precs);
+	}
+    else {
+	  SymmetricMatrix prec = prior->GetPrecisions();
+      prec(m_idx + 1, m_idx + 1) = m_params.prec();
+      prior->SetPrecisions(prec);
+	}
     return 0;
 }
 
@@ -746,6 +784,7 @@ Prior *PriorFactory::CreatePrior(Parameter p)
     case PRIOR_SPATIAL_p:
     case PRIOR_SPATIAL_n:
     case PRIOR_SPATIAL_k:
+	case PRIOR_SPATIAL_J:
         return new SpatialPrior(p, m_rundata);
     case PRIOR_ARD:
         return new ARDPrior(p, m_rundata);

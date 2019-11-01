@@ -15,21 +15,18 @@
 #include <armadillo>
 #include </home/tsun/bin/dlib-19.18/include/dlib/optimization.h>
 #include </home/tsun/bin/dlib-19.18/include/dlib/global_optimization.h>
+// #include "tpcclibConfig.h"
+// #include "include/libtpcmisc.h"
+// #include "libtpcmodel.h"
 #include "tgo.h"
 #include "optim.hpp"
 //
 #include "cmaes.h"
-// #include <pagmo/algorithm.hpp>
-// #include <pagmo/algorithms/nsga2.hpp>
-// #include <pagmo/algorithms/cmaes.hpp>
-// #include <pagmo/population.hpp>
-// #include <pagmo/problem.hpp>
-// #include <pagmo/problems/rosenbrock.hpp>
-// #include <pagmo/problems/dtlz.hpp>
-
-// #include <boost/test/unit_test.hpp>
-// #include <boost/lexical_cast.hpp>
-// #include <boost/test/floating_point_comparison.hpp>
+#include <pagmo/algorithm.hpp>
+#include <pagmo/algorithms/nsga2.hpp>
+#include <pagmo/population.hpp>
+#include <pagmo/problem.hpp>
+#include <pagmo/problems/dtlz.hpp>
 
 typedef  dlib::matrix<double,0,1> column_vec;
 typedef  dlib::matrix<double,3,1> parameter_vec;
@@ -148,37 +145,34 @@ double booth_fn2(const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess
     return obj_val;
 }
 
-// for cmaes
-libcmaes::FitFunc booth_fn3=[](const double *m, const int N)
-{
-    // const double x_1 = m(0); 
-    // const double x_2 = m(1);
-    double p[2];
-    p[0] =  m[0];
-    p[1] =  m[1];
-    double tmp = booth_fn(N,p, NULL);
-    std::cout << "..................." << tmp << std::endl;
-    return tmp;
-};
+// // for cmaes
+// libcmaes::FitFunc booth_fn3=[](const double *m, const int N)
+// {
+//     // const double x_1 = m(0); 
+//     // const double x_2 = m(1);
+//     double p[2];
+//     p[0] =  m[0];
+//     p[1] =  m[1];
+//     double tmp = booth_fn(N,p, NULL);
+//     std::cout << "..................." << tmp << std::endl;
+//     return tmp;
+// };
 
-using namespace libcmaes;
+// libcmaes::ProgressFunc<libcmaes::CMAParameters<>,libcmaes::CMASolutions> select_time = [](const libcmaes::CMAParameters<> &cmaparams, const libcmaes::CMASolutions &cmasols)
+// {
+//   if (cmasols.niter() % 100 == 0)
+//     std::cerr << cmasols.elapsed_last_iter() << std::endl;
+//   return 0;
+// };
 
-
-ProgressFunc<CMAParameters<>,CMASolutions> select_time = [](const CMAParameters<> &cmaparams, const CMASolutions &cmasols)
-{
-  if (cmasols.niter() % 100 == 0)
-    std::cerr << cmasols.elapsed_last_iter() << std::endl;
-  return 0;
-};
-
-FitFunc fsphere = [](const double *x, const int N)
-{
-  double val = 0.0;
-  std::cout << ">>>>>>>>>>>>>>>>";
-  for (int i=0;i<N;i++)
-    val += x[i]*x[i];
-  return val;
-};
+// libcmaes::FitFunc fsphere = [](const double *x, const int N)
+// {
+//   double val = 0.0;
+//   std::cout << ">>>>>>>>>>>>>>>>";
+//   for (int i=0;i<N;i++)
+//     val += x[i]*x[i];
+//   return val;
+// };
 
 
 
@@ -238,43 +232,40 @@ int main()
     // std::vector<double> x0(dim,10.0);
     // double sigma = 0.1;
     // //int lambda = 100; // offsprings at each generation.
-    // CMAParameters<> cmaparams(x0,sigma);
+    // libcmaes::CMAParameters<> cmaparams(x0,sigma);
     // cmaparams.set_quiet(false);
     // //cmaparams._algo = BIPOP_CMAES;
-    // CMASolutions cmasols = cmaes<>(fsphere,cmaparams);
+    // libcmaes::CMASolutions cmasols = libcmaes::cmaes<>(fsphere,cmaparams);
     // std::cout << "best solution: " << cmasols << std::endl;
     // std::cout << "optimization took " << cmasols.elapsed_time() / 1000.0 << " seconds\n";
-    int dim = 2;
-    std::vector<double> start_p;   //={0.1,0.1};
-    start_p.push_back(0.1);
-    start_p.push_back(0.1);
-    double sigma = 0.1;
-    double lambda = 100.0;
-    libcmaes::CMAParameters<> cmaparams(start_p,sigma,lambda);  //
-    cmaparams.set_quiet(false);
-    cmaparams.set_algo(BIPOP_CMAES);
-    libcmaes::CMASolutions cmasols = libcmaes::cmaes<>(booth_fn3,cmaparams);  //,select_time
-    std::cout << "cmaes solution: " << cmasols << std::endl; 
-    // std::cout << cmasols.run_status() << std::endl; 
-    // double p[2];
-    // p[0] =  0.1;
-    // p[1] =  0.1;
-    // // 1 - Instantiate a pagmo problem constructing it from a UDP
-    // // (user defined problem).
-    // pagmo::problem prob{ booth_fn(2,p, NULL) };    //booth_fn(2,p, NULL) }; pagmo::rosenbrock{25u}
-    // // 2 - Instantiate a pagmo algorithm
-    // // pagmo::algorithm algo{pagmo::cmaes(100)};
-    // pagmo::algorithm user_algo{pagmo::cmaes(10u, -1, -1, -1, -1, 0.5, 1e-6, 1e-6, false, false, 23u)};
-    // user_algo.set_verbosity(1u);
-    // pagmo::population pop{prob, 10u, 23u};
-    // pop = user_algo.evolve(pop);
-    // // BOOST_CHECK(user_algo.get_log().size() > 0u);
-    // // // 3 - Instantiate a population
-    // // pagmo::population pop{prob, 24};
-    // // // 4 - Evolve the population
-    // // pop = algo.evolve(pop);
-    // // 5 - Output the population
-    // std::cout << "The population: \n" << pop;
+    // int dim = 2;
+    // std::vector<double> start_p;   //={0.1,0.1};
+    // start_p.push_back(0.1);
+    // start_p.push_back(0.1);
+    // double sigma = 0.1;
+    // double lambda = 100.0;
+    // libcmaes::CMAParameters<> cmaparams(start_p,sigma,lambda);  //
+    // cmaparams.set_quiet(false);
+    // cmaparams.set_algo(BIPOP_CMAES);
+    //   std::cout << "his" << cmaparams << std::endl; 
+    // libcmaes::CMASolutions cmasols = libcmaes::cmaes<>(booth_fn3,cmaparams,select_time);  //
+    //       std::cout << "his" << std::endl; 
+    // // std::cout << "cmaes solution: " << cmasols << std::endl; 
+    // // std::cout << cmasols.run_status() << std::endl; 
+    double p[2];
+    p[0] =  0.1;
+    p[1] =  0.1;
+    // 1 - Instantiate a pagmo problem constructing it from a UDP
+    // (user defined problem).
+    pagmo::problem prob{ pagmo::dtlz(1, 10, 2)};    //booth_fn(2,p, NULL) };
+    // 2 - Instantiate a pagmo algorithm
+    pagmo::algorithm algo{pagmo::nsga2(100)};
+    // 3 - Instantiate a population
+    pagmo::population pop{prob, 24};
+    // 4 - Evolve the population
+    pop = algo.evolve(pop);
+    // 5 - Output the population
+    std::cout << "The population: \n" << pop;
 
 
 
@@ -313,8 +304,7 @@ int main()
     pmin[0]=0.0;    pmax[0]=10.0;   /* K1    */
     pmin[1]=0.0;    pmax[1]=10.0;   /* K1/k2 */
     double wss=0;
-    double *output = (double *)malloc(parNr*sizeof(double));   // not needed!
-    // double output[2];
+    double *output = (double *)malloc(parNr*sizeof(double));
 
     bool success_0 = tgo(
       pmin, pmax, booth_fn, NULL, parNr, neighNr,
@@ -329,7 +319,6 @@ int main()
     std::cout << "powell: solution to Booth test: \n"  << output[0] <<" " << output[1] << "\n" << std::endl;
     // arma::cout << "powell: solution to Booth test:\n" << output << arma::endl;
     
-    // free(output);
 
 
 
@@ -607,10 +596,10 @@ int main()
     {
         input = 10*dlib::randm(2,1);
         double tmp = model(input, params);           /// save a copy for nnls which require to know the sign
-        const double output1 = tmp*tmp;
+        const double output = tmp*tmp;
 
         // save the pair
-        data_samples.push_back(std::make_pair(input, output1));
+        data_samples.push_back(std::make_pair(input, output));
         aux_nnls_output.push_back(tmp);
     }
 
@@ -636,12 +625,10 @@ int main()
     int m, n;
     int nnls_m = 1000; int nnls_n = 3; bool isweight = false;
     double *dptr, *nnls_a[3], nnls_b[nnls_m], nnls_x[3], dataw[nnls_m];
-    double *nnls_mat=(double*)malloc(((nnls_n+2)*nnls_m)*sizeof(double));    //not needed!
-    // double nnls_mat[5000];
+    double *nnls_mat=(double*)malloc(((nnls_n+2)*nnls_m)*sizeof(double));
     for(n=0, dptr=nnls_mat; n<nnls_n; n++) {nnls_a[n]=dptr; dptr+=nnls_m;}
     for(m=0; m<nnls_m; m++) {dataw[m]=1.0;}
 
-    // free(nnls_mat);
 
     /* Calculate the matrix for NNLS */
     /* Fill  A matrix: */
@@ -740,17 +727,3 @@ int main()
     return 0;
 
 }
-
-
-// g++ -DHAVE_CONFIG_H -I/home/tsun/bin/libcmaes-master/install/include/libcmaes \
-// -I/home/tsun/bin/eigen-eigen-323c052e1731/install/include/eigen3  \
-// -Wall -Wextra -g -O3 -mavx -mfma -fopenmp -g -O2 -o testOptim testOptim.cxx \
-// -L/home/tsun/bin/libcmaes-master/install/lib -lcmaes
-
-// g++ -I/home/tsun/bin/libcmaes-master/install/include/libcmaes \
-// -I/home/tsun/bin/eigen-eigen-323c052e1731/install/include/eigen3  \
-//  -fPIC -std=c++11 -fopenmp -o testOptim testOptim.cxx \
-// -L/home/tsun/bin/libcmaes-master/install/lib -lcmaes
-
-
-

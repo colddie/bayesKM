@@ -27,6 +27,7 @@ const char PRIOR_SPATIAL_p = 'p'; // P with Dirichlet BCs
 const char PRIOR_DEFAULT = '-';   // Use whatever the model specifies
 const char PRIOR_SPATIAL_n = 'n'; // 
 const char PRIOR_SPATIAL_k = 'k'; // 
+const char PRIOR_SPATIAL_J = 'J'; // 
 
 /**
  * Abstract interface for a parameter prior

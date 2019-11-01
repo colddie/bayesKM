@@ -91,20 +91,20 @@ int tcm2_idl(int argc, char **argv)
   */
   frameNr= *(unsigned int*) argv[0];
   t0     =  (double*) argv[1];
-  t1     =  (double*) argv[2];
-  tac    =  (double*) argv[3];
-  ctt    =  (double*) argv[4];
-  output =  (double*) argv[5];
-  verbose= *(unsigned int*) argv[6]; 
-  isweight =  *(unsigned int*) argv[7];
-  weights = (double*) argv[8];
-  def_pmin = (double*) argv[9];
-  def_pmax = (double*) argv[10];
-  fVb      = *(double*) argv[11];
-  doSD     = *(unsigned int*) argv[12]; 
-  doCL     = *(unsigned int*) argv[13]; 
-  bootstrapIter = *(unsigned int*) argv[14]; 
-  bmatrix   = (double*) argv[15];
+  //t1     =  (double*) argv[2];
+  tac    =  (double*) argv[2];
+  ctt    =  (double*) argv[3];
+  output =  (double*) argv[4];
+  verbose= *(unsigned int*) argv[5]; 
+  isweight =  *(unsigned int*) argv[6];
+  weights = (double*) argv[7];
+  def_pmin = (double*) argv[8];
+  def_pmax = (double*) argv[9];
+  fVb      = *(double*) argv[10];
+  doSD     = *(unsigned int*) argv[11]; 
+  doCL     = *(unsigned int*) argv[12]; 
+  bootstrapIter = *(unsigned int*) argv[13]; 
+  bmatrix   = (double*) argv[14];
   if(doSD || doCL) doBootstrap=1; else doBootstrap=0;
 //   /* Set parameter initial values and constraints */
 //   /* K1    */ def_pmin[0]=0.0;       def_pmax[0]=5.0;
@@ -175,12 +175,12 @@ int tcm2_idl(int argc, char **argv)
 
   for (int i=0; i<frameNr; i++) { 
     data.x1[i] = *(t0+i);
-    data.x2[i] = t1[i];
+    data.x2[i] = t0[i];
     data.x[i]=0.5*(data.x1[i]+data.x2[i]);
     data.voi[ri].y[i]= tac[i];
 
     input.x1[i] = *(t0+i);
-    input.x2[i] = t1[i];
+    input.x2[i] = t0[i];
     input.x[i]=0.5*(input.x1[i]+input.x2[i]);
     input.voi[ri].y[i]= ctt[i];
 

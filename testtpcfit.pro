@@ -26,7 +26,7 @@
 ;   "     Tissue density in MR calculation; default is 1.0 g/ml.",
 
   useref = 0;   use reference region as input?
-  testmode = 'pCT';   'patlak','logan','fur','mrtm','sim_patlak','sim_logan','SRTM','2TCMrev','MBF', 'pCT'
+  testmode = 'patlak';   '1TCM','2TCM','patlak','logan','fur','mrtm','sim_patlak','sim_logan','SRTM','2TCMrev','MBF', 'pCT'
 
 
 case testmode of
@@ -129,12 +129,12 @@ case testmode of
         tstart = 30
         tstop  = 90 
         frame_used = n_elements(where( (t0+t1)/2 gt tstart and (t0+t1)/2 lt tstop ))
-        output = double(fltarr(frame_used+1)) 
+        output = double(fltarr(10+1)) 
         debug  = 10
         fur_mode = 0
 
         patlog = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-        success = call_external(patlog, 'regfur_idl', long(frameNr), double(t0), double(t1), double(tac), $
+        success = call_external(patlog, 'regfur_idl', long(frameNr), double(t0), double(tac), $   ;, double(t1)
                         double(ctt),double(tstart),double(tstop),double(output),long(debug),long(fur_mode) ) 
     
 
@@ -303,6 +303,7 @@ case testmode of
     isweight = 1
     ; weights = fltarr(frameNr) + 1.0
     weights = (t1-t0)/total(t1-t0)
+	t = (t0+t1)/2
     ; directbp = 1
     def_pmin = [0.0,0.00001,0.0]
     def_pmax = [5.0,10.0,0.0]  
@@ -313,7 +314,7 @@ case testmode of
     matrix = double(fltarr(bootstrapIter*4)) ; change with num_param
 
     patlog = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-    success = call_external(patlog, 'tcm1_idl', long(frameNr), double(t0), double(t1), double(tac), $
+    success = call_external(patlog, 'tcm1_idl', long(frameNr), double(t), double(tac), $  ; double(t0), double(t1)
                     double(ctt),output,long(debug), $
                     long(isweight),double(weights),double(def_pmin),double(def_pmax), $
                     double(fVb),long(doSD),long(doCL), $
@@ -352,6 +353,7 @@ case testmode of
     isweight = 1
     ; weights = fltarr(frameNr) + 1.0
     weights = (t1-t0)/total(t1-t0)
+    t = (t0+t1)/2
     ; directbp = 1
     def_pmin = [0.0,0.00001,0.0,0.0]
     def_pmax = [5.0,10.0,2.0,0.08]
@@ -362,7 +364,7 @@ case testmode of
     matrix = double(fltarr(bootstrapIter*4)) ; change with num_param
 
     patlog = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-    success = call_external(patlog, 'tcm2_idl', long(frameNr), double(t0), double(t1), double(tac), $
+    success = call_external(patlog, 'tcm2_idl', long(frameNr), double(t), double(tac), $  ; double(t0), double(t1)
                     double(ctt),output,long(debug), $
                     long(isweight),double(weights),double(def_pmin),double(def_pmax), $
                     double(fVb),long(doSD),long(doCL), $
@@ -392,6 +394,7 @@ case testmode of
     isweight = 1
     ; weights = fltarr(frameNr) + 1.0
     weights = (t1-t0)/total(t1-t0)
+    t = (t0+t1)/2
     ; directbp = 1
     def_pmin = [0.0,0.00001,0.0,0.0,0.0]
     def_pmax = [5.0,10.0,2.0,10.0,0.08]
@@ -402,7 +405,7 @@ case testmode of
     matrix = double(fltarr(bootstrapIter*5)) ; change with num_param
 
     patlog = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-    success = call_external(patlog, 'tcm2re_idl', long(frameNr), double(t0), double(t1), double(tac), $
+    success = call_external(patlog, 'tcm2re_idl', long(frameNr), double(t), double(tac), $
                     double(ctt),output,long(debug), $
                     long(isweight),double(weights),double(def_pmin),double(def_pmax), $
                     double(fVb),long(doSD),long(doCL), $
@@ -473,6 +476,7 @@ case testmode of
     isweight = 1
     ; weights = fltarr(frameNr) + 1.0
     weights = (t1-t0)/total(t1-t0)
+	t = (t0+t1)/2
     ; directbp = 1
     def_pmin = [0.0,0.00001,0.0]
     def_pmax = [5.0,10.0,1.0]  
@@ -483,7 +487,7 @@ case testmode of
     matrix = double(fltarr(bootstrapIter*4)) ; change with num_param
 
     patlog = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
-    success = call_external(patlog, 'mbf_idl', long(frameNr), double(t0), double(t1), double(tac), $
+    success = call_external(patlog, 'mbf_idl', long(frameNr), double(t), double(tac), $  ; double(t0), double(t1),
                     double(ctt),output,long(debug), $
                     long(isweight),double(weights),double(def_pmin),double(def_pmax), $
                     double(fVb),long(doSD),long(doCL), $
@@ -542,22 +546,22 @@ case testmode of
     print, output,' ', cbv,' ', ttp/10.
 
 
-  stop
+    stop
 
-  ; Apply conventional block-circulant SVD approach
-  lambda = 0.2   ; truncation
-  mpad   = 2
-  mask   = 0
-  dt    /= 1.    ; /=10.
-  first  = 0
-  last   = 200     ; depends ont mtt
-  ; tac = congrid(tac,10)
-  ; aif = congrid(aif,10)
-  pct_bsvd, tac, aif, dt, lambda, mpad, mask, $
-              cbf=cbfmap, cbv=cbvmap, mtt=mttmap,delay=delaymap,k=k,$
-              first=first,last=last
+    ; Apply conventional block-circulant SVD approach
+    lambda = 0.2   ; truncation
+    mpad   = 2
+    mask   = 0
+    dt    /= 1.    ; /=10.
+    first  = 0
+    last   = 200     ; depends ont mtt
+    ; tac = congrid(tac,10)
+    ; aif = congrid(aif,10)
+    pct_bsvd, tac, aif, dt, lambda, mpad, mask, $
+                cbf=cbfmap, cbv=cbvmap, mtt=mttmap,delay=delaymap,k=k,$
+                first=first,last=last
 
-  print, cbfmap, mttmap/10., cbvmap, delaymap, ttp/10.
+    print, cbfmap, mttmap/10., cbvmap, delaymap, ttp/10.
 
   stop 
 
@@ -667,3 +671,4 @@ stop
 
 
 End
+

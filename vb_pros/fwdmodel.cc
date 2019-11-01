@@ -316,7 +316,6 @@ void FwdModel::GetParameters(FabberRunData &rundata, vector<Parameter> &params)
                 if (prior_type != PRIOR_DEFAULT)
                     p->prior_type = prior_type;
 
-	LOG << prior_type << endl;
 				
                 double mean = rundata.GetDoubleDefault(
                     "PSP_byname" + psp_idx_str + "_mean", p->prior.mean());
@@ -324,7 +323,7 @@ void FwdModel::GetParameters(FabberRunData &rundata, vector<Parameter> &params)
                     "PSP_byname" + psp_idx_str + "_prec", p->prior.prec());
                 p->prior = DistParams(mean, 1 / prec);
                 p->options["image"] = "PSP_byname" + psp_idx_str + "_image";
-            }
+                p->options["pimage"] = "PSP_byname" + psp_idx_str + "_pimage";            }
             psp_idx++;
         }
 

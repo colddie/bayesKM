@@ -118,6 +118,8 @@ static OptionSpec OPTIONS[] = {
     { "PSP_byname<n>_image", OPT_IMAGE, "Image prior for parameter <n>", OPT_NONREQ, "" },
     { "PSP_byname<n>_prec", OPT_FLOAT, "Precision to apply to image prior for parameter <n>",
         OPT_NONREQ, "" },
+    { "PSP_byname<n>_pimage", OPT_IMAGE, "Precision image to apply to image prior for parameter <n>",
+        OPT_NONREQ, "" },
     { "PSP_byname<n>_transform", OPT_STR, "Transform to apply to parameter <n>", OPT_NONREQ, "" },
     { "allow-bad-voxels", OPT_BOOL,
         "Continue if numerical error found in a voxel, rather than stopping", OPT_NONREQ, "" },
@@ -424,6 +426,7 @@ bool Vb::IsSpatial(FabberRunData &rundata) const
             case PRIOR_SPATIAL_p:
 			case PRIOR_SPATIAL_n:    //add later
 			case PRIOR_SPATIAL_k:    //add later
+			case PRIOR_SPATIAL_J:    //add later
                 return true;
             }
         }
@@ -749,12 +752,13 @@ void Vb::DoCalculationsSpatial(FabberRunData &rundata)
     m_model->GetParameters(rundata, params);
     vector<Prior *> priors = PriorFactory(rundata).CreatePriors(params);
 
-
+	LOG << "tessst!"<<endl;
     /////////////////////////////////
     // string stringuse_img = params[0].options.find("image")->second;
     string stringuse_img = rundata.GetStringDefault("PSP_byname1_image", "");
     bool use_img = (stringuse_img != "");
     if (use_img) {
+			LOG << "tessst!"<<endl;
         for (int v = 1; v <= m_nvoxels; v++)
         {
             m_ctx->v = v;
@@ -942,7 +946,7 @@ LOG << "hi" << endl;
 // }
 // /////////////// 
 
- LOG << "check me here" << m_ctx->fwd_prior[v - 1].means(1) << " "<<m_ctx->fwd_prior[v - 1].means(2) <<" "<<m_ctx->fwd_prior[v - 1].means(3) << " "<<m_ctx->fwd_prior[v - 1].means(4) ;
+// LOG << "check me here" << m_ctx->fwd_prior[v - 1].means(1) << " "<<m_ctx->fwd_prior[v - 1].means(2) <<" "<<m_ctx->fwd_prior[v - 1].means(3) << " "<<m_ctx->fwd_prior[v - 1].means(4) ;
 
                 m_noise->UpdateTheta(*m_ctx->noise_post[v - 1], m_ctx->fwd_post[v - 1],
                     m_ctx->fwd_prior[v - 1], m_lin_model[v - 1], m_origdata->Column(v), NULL, 0);

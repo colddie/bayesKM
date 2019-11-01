@@ -1,8 +1,8 @@
 
-test = 0
-debug = 0
+test = 1
+debug = 1
 
-if 1 then begin
+if 1 then begin    ; 'dPET'
 
   pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/fluropirdizeC1rebin0.5/'
   ; restore,filename='img.sav'
@@ -37,7 +37,7 @@ if 1 then begin
   plasma_c[0] = 0.
 endif
 
-if 0 then begin
+if 0 then begin   ; 'pCT'
   
   pad = '/home/tsun/work/bayesKM/DynamicBrainPhantom/'
   ; restore,filename='tmpsub.sav'
@@ -72,21 +72,21 @@ endif
 nsample = n_elements(plasma_t)
 ; weight = total(total(total(img,1),1),1) / total(img)*nsample   ; ought to be duration but we infer that from the image in simulation
 ; weight   = (dta->weight)[i]	=  (dta->tissue_c)[i]/arma::accu(dta->tissue_c)*nsample;
-; weight   = double(nsample) + 1.0
+weight   = double(nsample) + 1.0
 weight = (plasma_t -shift(plasma_t,1)) / plasma_t[n_elements(plasma_t)-1] * nsample
 weight[0] = 0.
 ; weight = fltarr(nsample) + 1.
 model = 1L   ; 1,2,3
 tracer = 'fluropirdize'   ; 'way','fdg', 'fluropirdize', 'fdopa'
 mcmc = 0L;  rwmh, hmc
-useprior = 0LL
+useprior = 0L
 
 case model of 
   1: begin     ;K1,k2
     if tracer eq 'fluropirdize' then begin  
-      initialK = [0.3, 0.4]            
+      initialK = [0.01, 10.9]            
       lb = [0., 0.]
-      ub = [2., 4.]    ;[2., 4.]
+      ub = [20., 40.]    ;[2., 4.]
     endif
   end
 
@@ -155,7 +155,7 @@ endcase
 initialK = double(initialK)
 lb = double(lb)
 ub = double(ub)
-rwmh_par_scale = double(0.006)    ; was 0.06 for 1tpc 
+rwmh_par_scale = double(0.02)    ; was 0.06 for 1tpc 
 hmc_step_size  = double(0.001)
 rwmh_n_burnin  = 10000L *2          ; ?
 rwmh_n_draws   = 10000L 

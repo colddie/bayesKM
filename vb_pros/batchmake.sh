@@ -7,13 +7,15 @@
 #  
 # make sure run sed -i 's/\r//' batchmake.sh first
 function batchmake() {
-    
 cd /home/tsun/bin/fsl/install/src/fabber_core
 make cleana
-make install
+make install -j4
 cd /home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c2
 make clean
 cp /home/tsun/bin/fsl/install/src/fabber_core/fabber_main.o /home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c2
-make all
-
+make all -j4
+cd /home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1
+make clean
+cp /home/tsun/bin/fsl/install/src/fabber_core/fabber_main.o /home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1
+make all -j4
 }

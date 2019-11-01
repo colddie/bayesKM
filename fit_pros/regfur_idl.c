@@ -70,14 +70,14 @@ int regfur_idl(int argc, char **argv)
   */
   frameNr= *(unsigned int*) argv[0];
   t0     =  (double*) argv[1];
-  t1     =  (double*) argv[2];
-  tac    =  (double*) argv[3];
-  ctt    =  (double*) argv[4];
-  startTime = *(double*) argv[5];
-  endTime  = *(double*) argv[6]; 
-  output =  (double*) argv[7];
-  verbose= *(unsigned int*) argv[8];
-  fur_mode = *(unsigned int*) argv[9]; 
+  //t1     =  (double*) argv[2];
+  tac    =  (double*) argv[2];
+  ctt    =  (double*) argv[3];
+  startTime = *(double*) argv[4];
+  endTime  = *(double*) argv[5]; 
+  output =  (double*) argv[6];
+  verbose= *(unsigned int*) argv[7];
+  fur_mode = *(unsigned int*) argv[8]; 
 
 
   /* Allocate memory for data */
@@ -128,12 +128,12 @@ int regfur_idl(int argc, char **argv)
 
   for (int i=0; i<frameNr; i++) { 
     data.x1[i] = t0[i];
-    data.x2[i] = t1[i];
+    data.x2[i] = t0[i];
     data.x[i]=0.5*(data.x1[i]+data.x2[i]);
     data.voi[ri].y[i]= tac[i];
 
     input.x1[i] = t0[i];
-    input.x2[i] = t1[i];
+    input.x2[i] = t0[i];
     input.x[i]=0.5*(input.x1[i]+input.x2[i]);
     input.voi[ri].y[i]= ctt[i];
     }
