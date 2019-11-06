@@ -20,6 +20,7 @@
 #include "libtpccurveio.h"
 #include "libtpcsvg.h"
 #include "libtpcmodext.h"
+#include "meKineticRigid.h"
 /*****************************************************************************/
 
 /*****************************************************************************/
@@ -43,19 +44,24 @@
 /**
  *  Main
  */
-int patlak_idl(int argc,  float * argv[])         //Pure c does not require extern  "C" 
+int patlak_c(unsigned int frameNr, double *t0, double *t1,double *tac, double *ctt,
+               double tstart, double tstop, double *output, unsigned int verbose, 
+               unsigned int llsq_model,
+               unsigned int isweight, double *weights)         //Pure c does not require extern  "C" 
 {
+
   int        ai, help=0, version=0;
-  unsigned int verbose;
+  // unsigned int verbose;
   DFT        data, input, temp;
   int        save_stat=1, always_mid=0;
   double     LC=-1.0, Ca=-1.0, density=-1.0;
   double     fixed_Ic=-9.E99;
   int        ri=0, fi, pi, ret, inputtype=0;
-  unsigned int llsq_model;
+  // unsigned int llsq_model;
   char       dfile, ifile, rfile,          
              sfile, tmp[1024], *cptr;          // pfile,  [FILENAME_MAX]
-  double     tstart, tstop, Ki, KiSD, Ic, IcSD, SWSS;
+  // double     tstart, tstop;
+  double     Ki, KiSD, Ic, IcSD, SWSS;
   double     istart=0.0;
   double     f, xm, ym, xs, ys;
 //double    *w, *wx, *wy, *cx, *cy;
@@ -63,9 +69,9 @@ int patlak_idl(int argc,  float * argv[])         //Pure c does not require exte
 
   double    *t, *theta, *dv, *ci, *ici, *ct;
   int        dataNr=0, first, last;
-  double    *t0, *t1, *tac, *ctt, *output, *weights;
+  // double    *t0, *t1, *tac, *ctt, *output, *weights;
   int       voiNr = 1;
-  unsigned int    frameNr, isweight = 0;
+  // unsigned int    frameNr, isweight = 0;
   const char *debugfile1 = "debug1.txt";
   // FILE *pfile = fopen(debugfile1, "a+");
   const char *debugfile = "debug.txt";
@@ -73,21 +79,21 @@ int patlak_idl(int argc,  float * argv[])         //Pure c does not require exte
   dftInit(&data); dftInit(&input); dftInit(&temp); resInit(&res);
 
 
-  /* 
-   make sure interpolation and integration has been done before hand!
-  */
-  frameNr= *(unsigned int*) argv[0];
-  t0     =  (double*) argv[1];
-  t1     =  (double*) argv[2];
-  tac    =  (double*) argv[3];
-  ctt    =  (double*) argv[4];
-  tstart = *(double*) argv[5];
-  tstop  = *(double*) argv[6]; 
-  output =  (double*) argv[7];
-  verbose= *(unsigned int*) argv[8];
-  llsq_model = *(unsigned int*) argv[9]; 
-  isweight =  *(unsigned int*) argv[10];
-  weights = (double*) argv[11];
+  // /* 
+  //  make sure interpolation and integration has been done before hand!
+  // */
+  // frameNr= *(unsigned int*) argv[0];
+  // t0     =  (double*) argv[1];
+  // t1     =  (double*) argv[2];
+  // tac    =  (double*) argv[3];
+  // ctt    =  (double*) argv[4];
+  // tstart = *(double*) argv[5];
+  // tstop  = *(double*) argv[6]; 
+  // output =  (double*) argv[7];
+  // verbose= *(unsigned int*) argv[8];
+  // llsq_model = *(unsigned int*) argv[9]; 
+  // isweight =  *(unsigned int*) argv[10];
+  // weights = (double*) argv[11];
 
   // t0 = [0.,0.25,0.5,0.75,1.0,1.5,2.0,3.0,4.0,5.0,10,.0,15.0,20.0,25.0,30.,40.,45.,50.,60,70,80,90,100,110];
   // t1 = [0.25,0.5,0.75,1.0,1.5,2.0,3.0,4.0,5.0,10.0,15.0,20.0,25.0,30.,40.,45.,50.,60,70,80,90,100,110,120];   // from idl
@@ -125,9 +131,9 @@ int patlak_idl(int argc,  float * argv[])         //Pure c does not require exte
   data.voiNr=voiNr; data.frameNr=frameNr;
   data.isweight=isweight;
   data._type=DFT_FORMAT_PLAIN;
-  char cnr[1] = "1";
+  char cnr[1] = {'1'};
   strcpy(cnr, data.studynr);
-  char  cunit[6]="kBq/mL";
+  char  cunit[6]={'k'};
   strcpy(cunit, data.unit);
   data.timeunit=2;
   data.timetype=3;

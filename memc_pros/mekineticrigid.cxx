@@ -1,5 +1,5 @@
 // SimpleITK includes
-#include "SimpleITK.h"
+#include <SimpleITK.h>
 
 // ITK includes
 #include "itkImage.h"
@@ -8,11 +8,13 @@
 #include <iostream>
 #include <stdlib.h>
 #include <iomanip>
-#include <armadillo>
 #include "optim.hpp"
+#include "spline.h"
 // #include "tgo.h"
 
-#include 
+#include "meKineticRigid.h"
+
+
 
 using namespace std;
 namespace sitk = itk::simple;
@@ -23,60 +25,250 @@ namespace sitk = itk::simple;
 //
 struct ll_data
 {
+	int verbose;
 	int parNr = 6;
 	int nframe;
+	int model;
+	int *index;
 	float *rigmotion;
 	float tstart;
 	float tstop;
 	float *plasma_tt;
 	float *plasma_t;
 	float *plasma_c;
-    sitk::Image images;
+    sitk::Image imgs;
 };
+// Definition of IDL string
+typedef struct{
+	short slen;
+	short stype;
+	char* s;
+} idls;
 
 
 
-int meKineticRigid(int argc, float* argv[])
+
+double Func (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
 {
-	const char *imgfilename;
+	// printf("evaluate func once...");
+	const char *debugfile  = "debug.txt";
+	// FILE *pfile = fopen(debugfile, "a+");
+	ll_data* objfn_data = reinterpret_cast<ll_data*>(opt_data);
+	int verbose = objfn_data->verbose;
+	int nframe = objfn_data->nframe;
+	int *index = objfn_data->index; 
+	float *rigmotion = objfn_data->rigmotion;
+	sitk::Image imgs = objfn_data->imgs;
+	std::vector<unsigned int> dims = imgs.GetSize();
+	sitk::Image imgs1 = sitk::Image( dims , sitk::sitkFloat32);
+
+//    // b-spline interpoolate rigmotion
+// 	rigmotions1 = (float *) malloc(nframe*sizeof(float));
+// 	rigmotions2 = (float *) malloc(nframe*sizeof(float));
+// 	rigmotions3 = (float *) malloc(nframe*sizeof(float));
+// 	rigmotions4 = (float *) malloc(nframe*sizeof(float));
+// 	rigmotions5 = (float *) malloc(nframe*sizeof(float));
+// 	rigmotions6 = (float *) malloc(nframe*sizeof(float));  
+// 	for(int iframe=0;iframe<objfn_data->nframe;iframe++ ) { 
+// 		int tmpIndex = index[iframe] - 1;
+// 		rigmotions1[iframe] = rigmotion[tmpIndex*6];
+// 		rigmotions2[iframe] = rigmotion[tmpIndex*6+1];
+// 		rigmotions3[iframe] = rigmotion[tmpIndex*6+2];
+// 		rigmotions4[iframe] = rigmotion[tmpIndex*6+3];
+// 		rigmotions5[iframe] = rigmotion[tmpIndex*6+4];
+// 		rigmotions6[iframe] = rigmotion[tmpIndex*6+5];
+// 	}
+
+//    std::vector<double> X(5), Y(5);
+//    X[0]=0.1; X[1]=0.4; X[2]=1.2; X[3]=1.8; X[4]=2.0;
+//    Y[0]=0.1; Y[1]=0.7; Y[2]=0.6; Y[3]=1.1; Y[4]=0.9;
+
+//    tk::spline s;
+//    s.set_points(X,Y);    // currently it is required that X is already sorted
+
+//    printf("spline at %f is %f\n", x, s(x));
+
+//    return EXIT_SUCCESS;
+
+    // sitk::Image resampled_vectorout(dims,sitk::sitkVectorFloat32,objfn_data->nframe);
+	std::vector<sitk::Image> resampled_vectorout;
+	std::vector<unsigned int> extractSize(4);
+	std::vector<int> extractIndex(4);
+	// std::vector<int> destinationIndex(4);
+	for(int iframe=0;iframe<objfn_data->nframe;iframe++ ) {  
+
+		if (index[iframe] == 0) {
+			extractSize = imgs.GetSize();
+			extractSize[3] = 0;
+			extractIndex[0] = 0;
+			extractIndex[1] = 0;
+			extractIndex[2] = 0;
+			extractIndex[3] = iframe;
+			sitk::Image out0 = sitk::Extract(imgs, extractSize,extractIndex);
+			resampled_vectorout.push_back(out0);
+	     	continue;
+		}
+
+		int tmpIndex = index[iframe] - 1;
+		std::vector<double> rotation_center(3);
+		rotation_center[0] = dims[0]/double(2);
+		rotation_center[1] = dims[1]/double(2);
+		rotation_center[2] = dims[2]/double(2);
+		float theta_x = vals_inp[tmpIndex*6];
+		float theta_y = vals_inp[tmpIndex*6+1];
+		float theta_z = vals_inp[tmpIndex*6+2];
+		std::vector<double> translation(3);
+		translation[0] = vals_inp[tmpIndex*6+3];
+		translation[1] = vals_inp[tmpIndex*6+4];
+		translation[2] = vals_inp[tmpIndex*6+5];
+		// std::vector<double> rotation_center(3);
+		// rotation_center[0] = dims[0]/double(2);
+		// rotation_center[1] = dims[1]/double(2);
+		// rotation_center[2] = dims[2]/double(2);
+		// float theta_x = rigmotion[tmpIndex*6];
+		// float theta_y = rigmotion[tmpIndex*6+1];
+		// float theta_z = rigmotion[tmpIndex*6+2];
+		// std::vector<double> translation(3);
+		// translation[0] = rigmotion[tmpIndex*6+3];
+		// translation[1] = rigmotion[tmpIndex*6+4];
+		// translation[2] = rigmotion[tmpIndex*6+5];
+
+		sitk::Euler3DTransform euler_transform;
+		euler_transform.SetCenter(rotation_center);
+		euler_transform.SetRotation(theta_x, theta_y, theta_z);
+		euler_transform.SetTranslation(translation);
+		// resampled_image = resample(image, euler_transform)
+		//   parameterMap = sitk.GetDefaultParameterMap('translation');
+		//   transformixImageFilter = sitk.TransformixImageFilter();
+		//   transformixImageFilter.SetTransformParameterMap(transformParameterMap);
+
+    if (verbose == 1 ) {
+		FILE *pfile = fopen(debugfile, "a+");
+		fprintf(pfile, "index: %d %d, \n", iframe, tmpIndex);
+		fprintf(pfile, "offset: %f, %f %f \n",  rotation_center[0], rotation_center[1], rotation_center[2]);
+		fprintf(pfile, "theta: %f, %f %f \n",  theta_x, theta_y, theta_z);
+		fprintf(pfile, "translation: %f, %f %f \n",  translation[0], translation[1], translation[2]);
+		fclose(pfile);
+	}
+
+		extractSize = imgs.GetSize();
+		extractSize[3] = 0;
+		extractIndex[0] = 0;
+		extractIndex[1] = 0;
+		extractIndex[2] = 0;
+		extractIndex[3] = iframe;
+
+		sitk::Image out = sitk::Extract(imgs, extractSize,extractIndex);
+		sitk::Image resampled_out = sitk::Resample(out, euler_transform);
+        resampled_vectorout.push_back(resampled_out);
+		
+		// sitk::Image tmpimgs = sitk::JoinSeries(resampled_out);
+		// imgs1 = sitk::Paste(imgs, tmpimgs, tmpimgs.GetSize(), extractIndex);
+
+	}   // endfor frame
+
+    // join all 3d images to a 4d volume
+	imgs1 = sitk::JoinSeries(resampled_vectorout);
+
+    if (verbose == 1 ) {
+	sitk::ImageFileWriter writer;
+	writer.SetFileName( std::string("images_before_transform.nii") );
+	writer.Execute(imgs);
+	sitk::ImageFileWriter writer1;
+	writer.SetFileName( std::string("images_after_transform.nii") );
+	writer.Execute(imgs1);
+	}
+
+	// Patlak
+	double var = 0.0;
+	double *tac = (double *)malloc(nframe*sizeof(double));    // cast float to double?
+	double output[5];
+	double *weights = (double *)malloc(nframe*sizeof(double));
+	double *plasma_t = reinterpret_cast<double*>(objfn_data->plasma_t);
+	double *plasma_tt = reinterpret_cast<double*>(objfn_data->plasma_tt);
+	double *plasma_c = reinterpret_cast<double*>(objfn_data->plasma_c);
+	for (int iframe=0;iframe<nframe;iframe++) { weights[iframe] = 1.0; }
+	for (int jcol=0;jcol<dims[0];jcol++) {
+	for (int jrow=0;jrow<dims[1];jrow++) {
+	for (int jplane=0;jplane<dims[2];jplane++)
+	{
+		// sitk::Image out = sitk::Extract(imgs1,extractSize,extractIndex);
+		std::vector<unsigned int> tacIndex(4);
+		tacIndex[0] = jcol;
+		tacIndex[0] = jrow;
+		tacIndex[0] = jplane;
+		tacIndex[0] = 0;
+		for (int iframe=0;iframe<nframe;iframe++) { tac[iframe]=imgs1.GetPixelAsDouble(tacIndex); }
+
+		int success = patlak_c(nframe,plasma_t, plasma_tt, tac, 
+						plasma_c,(double)objfn_data->tstart,(double)objfn_data->tstop,output,1,0,0,weights);    //debug,llsq_model,isweight
+		var += output[4];
+		if (verbose==1) { 
+			FILE *pfile = fopen(debugfile, "a+");
+			fprintf(pfile, "offset: %f %f %f %f %f %f \n", output[0], output[1], output[2],
+			        output[3], output[4], output[5]);
+			fclose(pfile);
+		}
+	}
+printf("total variance: %f", var);
+
+ 	free(tac);
+    free(weights);
+
+	return var;
+
+}
+}
+}
+
+
+
+
+
+int meKineticRigid(int argc, float* argv[])     //meKineticRigid
+{
+
+    std::string imgfilename;
 	float *parms0;
 	int model;
+	int   *index;
 	const char *debugfile  = "debug.txt"; 
-	int verbose = 1; 
+	// int verbose = 1; 
     // float *rigotion;
 
-
     /* debug */
-    if (argc > 9 || argc <= 1) {
+    if (argc > 11 || argc <= 1) {
       FILE *pfile = fopen(debugfile, "a+");
-	  fprintf(pfile, "meKineticRigid: 18arguments required, %d supplied\n", argc);
+	  fprintf(pfile, "meKineticRigid: 18 arguments required, %d supplied\n", argc);
 	  fclose(pfile);
       return -1;
     }
 
-
 	// Read the image
 	//	
 	ll_data opt_data;
-    optdata.nframe       =  *(size_t *)  argv[0];
-	imgfilename          =  string((*(idls *) argv[1]).s);
+    opt_data.nframe      =  *(size_t *)  argv[0];
+	imgfilename          =  std::string((*(idls *) argv[1]).s);
 	parms0               =  (float *)  argv[2];		
 	opt_data.tstart      =  *(float *) argv[3];
 	opt_data.tstop       =  *(float *) argv[4];
 	opt_data.plasma_tt   =  (float *)  argv[5];
 	opt_data.plasma_t    =  (float *)  argv[6];
-	opt_data.plasma_c    =  *(unsigned int*) argv[7];
-	opt_data.rigmotion   =  (float *)  argv[8];
+	opt_data.plasma_c    =  (float*)   argv[7];
+	opt_data.model       =  *(int *)   argv[8];
+	opt_data.rigmotion   =  (float *)  argv[9];
+	opt_data.index       =  (int *)   argv[10];
+	opt_data.verbose     =  *(int *)   argv[11];
 
 	sitk::ImageFileReader reader;
 	reader.SetFileName( imgfilename );
-	opt_data.images = reader.Execute();
+	opt_data.imgs = reader.Execute();
 
-    if (verbose == 1 ) {
+    if (opt_data.verbose == 1 ) {
 		FILE *pfile = fopen(debugfile, "a+");
 		fprintf(pfile, "test, %d supplied\n", argc);
-		fprintf(pfile, "size: %d, %d %d \n" , optdata.nframe , opt_data.tstart, opt_data.tstop);
-		fprintf(pfile, "spacing: %f, %f %f \n",  opt_data.plasma_tt[0], opt_data.plasma_t[0], opt_data.plasma_c[0]);
+		fprintf(pfile, "size: %d, %f %f \n" , opt_data.nframe , opt_data.tstart, opt_data.tstop);
+		fprintf(pfile, "spacing: %f, %f %f \n",  opt_data.plasma_tt[0], opt_data.plasma_t[0], opt_data.plasma_c[opt_data.nframe-1]);
 		// fprintf(pfile, "offset: %f, %f %f \n",  offsetx, offsety, offsetz);
 		fclose(pfile);
 	}
@@ -84,11 +276,13 @@ int meKineticRigid(int argc, float* argv[])
 
     arma::vec x = arma::ones(opt_data.parNr,1); // initial values: (2,2)
 	for (int i=0;i<opt_data.parNr;i++) {
-		x[i] = opt_data.parms0[i]; }
+		x[i] = parms0[i]; }
 
-    settings.verbose_print_level = verbose;
-    int success = optim::de(x,Func,opt_data,settings);
- 
+    optim::algo_settings_t settings;
+    settings.verbose_print_level = 1;   //opt_data.verbose;
+    int success = optim::de(x,Func,&opt_data,settings);
+    // int success = optim::cg()
+
     if (success) {
         std::cout << "de: Booth test completed successfully." << std::endl;
     } else {
@@ -104,92 +298,6 @@ int meKineticRigid(int argc, float* argv[])
 
 
 
-float Func (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
-{
-
-	ll_data_t* objfn_data = reinterpret_cast<ll_data_t*>(opt_data);
-	float *rigmotion = objfn_data.rigmotion;
-	sitk::Image imgs = objfn_data.imgs;
-	std::vector<unsigned int> dims = imgs.GetDimension();
-	sitk::Image imgs1 = sitk::Image( dims , sitk::sitkFloat32);
-
-	//
-	std::vector<unsigned int> rotation_center(3);
-	rotation_center[0] = dims[0]/2;
-	rotation_center[1] = dims[1]/2;
-	rotation_center[2] = dims[2]/2;
-	float theta_x = rigmotion[0];
-	float theta_y = rigmotion[1];
-	float theta_z = rigmotion[2];
-	std::vector<unsigned int> translation(3);
-	translation[0] = rigmotion[3];
-	translation[1] = rigmotion[4];
-	translation[2] = rigmotion[5];
-
-	sitk::Euler3DTransform euler_transform;
-	//  = sitk::Euler3DTransform(rotation_center,
-	//  theta_x, theta_y, theta_z, translation)
-	euler_transform.SetCenter(rotation_center);
-	euler_transform.SetRotation(theta_x, theta_y, theta_z);
-	euler_transform.SetOffet(translation);
-	// resampled_image = resample(image, euler_transform)
-	//   parameterMap = sitk.GetDefaultParameterMap('translation');
-	//   transformixImageFilter = sitk.TransformixImageFilter();
-	//   transformixImageFilter.SetTransformParameterMap(transformParameterMap);
-
-
-	for(int iframe=objfn_data.nframe/2;iframe<objfn_data.nframe;iframe++ ) {   ///?????
-		// tmpimg = imgs[:,:,:iframe];
-		std::vector<unsigned int> extractSize(4);
-		std::vector<unsigned int> extractIndex(4);
-		extractSize = imgs.Getsize();
-		extractSize[3] = 0;
-		extractIndex[0] = 0;
-		extractIndex[1] = 0;
-		extractIndex[2] = 0;
-		extractIndex[3] = iframe;
-
-		sitk::Image out = sitk::Extract(imgs, extractSize,extractIndex);
-		sitk::Image resampled_out = sitk::resample(out, euler_transform);
-
-		imgs1 = sitk::Paste(imgs, resampled_out, resampled_out.GetSize(), destinationIndex=[0,0,0,iframe]);
-	}
-	sitk::writeImage(imgs,'images_before_transform.nii');
-	sitk::writeImage(imgs1,'images_afer_transform.nii');
-
-	// Patlak
-	float var = 0.0;
-	float *tac = (float *)malloc(nframe*sizeof(float));    // cast float to double?
-	float *output = (float *)malloc(5*sizeof(float));
-	for (int jcol=0;jcol<dims[0];jcol++) {
-	for (int jrow=0;jrow<dims[1];jrow++) {
-	for (int jplane=0;jplane<dims[2];jplane++)
-	{
-		extractSize[0] = 1;
-		extractSize[1] = 1;
-		extractSize[2] = 1;
-		extractSize[3] = nframe;
-		extractIndex[0] = jcol;
-		extractIndex[1] = jrow;
-		extractIndex[2] = jplane;
-		extractIndex[3] = iframe;
-		sitk::Image out = sitk::Extract(imgs1,extractSize,extractIndex);
-
-		for (int iframe=0;iframe<nframe;iframe++) { tac[iframe]=out[iframe]; }
-
-		// success = patlak_c(nframe, objfn_data.plasma_t, objfn_data.plasma_tt, tac, 
-		// 				objfn_data.plasma_c,objfn_data.tstart,objfn_data.tstop,output,0,0,0);    //debug,llsq_model,isweight
-		var += output[4];
-	}
-
-	free(tac);
-	free(output);
-
-	return var;
-
-}
-}
-}
 
 
 // ImportFilterType readinFilter_voxel(fiximg,defimg,sizex,sizey,sizez,spacingx,spacingy

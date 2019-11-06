@@ -211,7 +211,7 @@ double ImagePrior::ApplyToMVN(MVNDist *prior, const RunContext &ctx, FabberRunDa
 	SymmetricMatrix prec = prior->GetPrecisions();
     prec(m_idx + 1, m_idx + 1) = m_params.prec();
     prior->SetPrecisions(prec);
-	
+LOG << "hi1111111111111111111" <<endl;
     return 0;
 }
 
@@ -304,16 +304,16 @@ double SpatialPrior::SetImgPrior(MVNDist *prior, MVNDist *posterior, const RunCo
     posterior->means(m_idx+1) = m_image(ctx.v); 
 
 	// 
-    std::string stringuse_img = rundata.GetStringDefault("PSP_byname1_pimage", "");
-    bool use_img = (stringuse_img != "");
-	if (use_img) {
-      string m_filename1 = param.options.find("pimage")->second;	
-	  NEWMAT::RowVector m_image1 = rundata.GetVoxelData(m_filename1).AsRow();
-	  SymmetricMatrix precs = prior->GetPrecisions();
-      precs(m_idx + 1, m_idx + 1) = m_image1(ctx.v); 
-      prior->SetPrecisions(precs);
-      posterior->SetPrecisions(precs);
-	}
+    // std::string stringuse_img = rundata.GetStringDefault("PSP_byname1_pimage", "");
+    // bool use_img = (stringuse_img != "");
+	// if (use_img) {
+    //   string m_filename1 = param.options.find("pimage")->second;	
+	//   NEWMAT::RowVector m_image1 = rundata.GetVoxelData(m_filename1).AsRow();
+	//   SymmetricMatrix precs = prior->GetPrecisions();
+    //   precs(m_idx + 1, m_idx + 1) = m_image1(ctx.v); 
+    //   prior->SetPrecisions(precs);
+    //   posterior->SetPrecisions(precs);
+	// }
 }//////////////////////////////////
 
 
@@ -403,6 +403,8 @@ if (m_type_code == PRIOR_SPATIAL_J)
   return 0;
 }
 
+
+LOG << "U am here!!!!!!!!!!!!!!!" << endl;
 
 //////////////////////////////////
     // use bowsher
@@ -737,7 +739,7 @@ double SpatialPrior::ApplyToMVN_(MVNDist *prior, const RunContext &ctx, FabberRu
 	  SymmetricMatrix precs = prior->GetPrecisions();
       precs(m_idx + 1, m_idx + 1) = m_image1(ctx.v); 
       prior->SetPrecisions(precs);
-      posterior->SetPrecisions(precs);
+    //   posterior->SetPrecisions(precs);
 	}
     else {
 	  SymmetricMatrix prec = prior->GetPrecisions();

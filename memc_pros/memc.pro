@@ -117,18 +117,26 @@ for jvoxel = 0, long(nrcols)*nrrows*nrplanes-1 do begin
 endfor
 imgs1 = reform(imgs1,nrcols,nrrows,nrplanes,nframes)
 
-help, niwrite_nii(float(imgs1),pad+'memc_movingPhantom.nii',orientation='RAS')
+; help, niwrite_nii(imgs1,pad+'memc_movingPhantom.nii',orientation='RAS')
 stop
 
 ; ----------------------
 ; Call external optimization program 
-parms0 = parms *0
-lib = '../libmemc.so'
+debug = 0
+tstart = float(tstart)
+tstop = float(tstop)
+nframe = (size(imgs1))[4]
+imgfilename = pad+'memc_movingPhantom.nii'
+lib = 'build/libmeKineticRigid.so'
 model = 0   ; 0=patlak, 1=logan
 plasma_tt = [[0], plasma_t[0:n_elements(plasma_t)-2]] 
-success = call_external(lib, 'memc', nframe, imgfilename, parms0, tstart, tstop, $
-                        plasma_tt,plasma_t, plasma_c, model, rigmotion )
-
+parms0 = parms *0   ;;
+nframeToFit = 1 ;;
+rigmotion = fltarr(6,nframeToFit)
+fitIndex = lonarr(nframe)
+fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
+success = call_external(lib, 'meKineticRigid', nframe, imgfilename, parms0, tstart, tstop, $
+                        plasma_tt,plasma_t, plasma_c, model, rigmotion, fitIndex, debug)
 
 
 

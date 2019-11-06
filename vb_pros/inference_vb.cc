@@ -896,9 +896,11 @@ LOG << "hi" << endl;
                 for (int k = 0; k < m_num_params; k++)
                 {
                     if (params[0].prior_type == (PRIOR_NORMAL || PRIOR_DEFAULT)) {
+                      LOG << "waht?" << endl;
                        Fprior += priors[k]->ApplyToMVN(&m_ctx->fwd_prior[v - 1], *m_ctx, rundata, params[k]);
                     } else {
                         if (m_ctx->it < 1) {
+                            LOG << "waht" << endl;
                             // allow use the prior information when combining the spatial prior
                             Fprior += priors[k]->ApplyToMVN_(&m_ctx->fwd_prior[v - 1], *m_ctx, rundata, params[k]);
                         }
