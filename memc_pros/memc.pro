@@ -62,7 +62,7 @@ stop
 
 
 ; motion1 fast motion (in-plane only)
-parms = [10/180.*!pi,0.0,0.0,2.0,5.0,0.0,1.,1.,1.,0,0,0]
+parms = [10/180.*!pi*0,0.0,0.0,2.0,5.0,0.0,1.,1.,1.,0,0,0]
 imovframe = nframes/2
 imgs = reform(imgs,nrcols,nrrows,nrplanes,nframes)
 imgs1 = fltarr(nrcols,nrrows,nrplanes,nframes)
@@ -86,7 +86,7 @@ nframes= n_elements(plasma_t)
 tstart = 20
 tstop  = 60
 output = double(fltarr(5)) 
-debug  = 0
+debug  = 0L
 llsq_model = 0
 isweight   = 0;
 patlog     = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
@@ -117,26 +117,34 @@ for jvoxel = 0, long(nrcols)*nrrows*nrplanes-1 do begin
 endfor
 imgs1 = reform(imgs1,nrcols,nrrows,nrplanes,nframes)
 
-; help, niwrite_nii(imgs1,pad+'memc_movingPhantom.nii',orientation='RAS')
+help, niwrite_nii(imgs1,pad+'memc_movingPhantom.nii',orientation='RAS')
 stop
 
 ; ----------------------
 ; Call external optimization program 
-debug = 0
+debug = 1L
 tstart = float(tstart)
 tstop = float(tstop)
 nframe = (size(imgs1))[4]
 imgfilename = pad+'memc_movingPhantom.nii'
 lib = 'build/libmeKineticRigid.so'
 model = 0   ; 0=patlak, 1=logan
+fitmethod = 2L
 plasma_tt = [[0], plasma_t[0:n_elements(plasma_t)-2]] 
 parms0 = parms *0   ;;
+; parms0[0] = parms[1]
+; parms0[1] = parms[2]
+; parms0[2] = parms[0]
+; parms0[3] = parms[5]
+; parms0[4] = parms[3]
+; parms0[5] = parms[4]
 nframeToFit = 1 ;;
 rigmotion = fltarr(6,nframeToFit)
 fitIndex = lonarr(nframe)
 fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
 success = call_external(lib, 'meKineticRigid', nframe, imgfilename, parms0, tstart, tstop, $
-                        plasma_tt,plasma_t, plasma_c, model, rigmotion, fitIndex, debug)
+                        double(plasma_tt),double(plasma_t), double(plasma_c), model, fitmethod,rigmotion, $
+                         fitIndex, debug)
 
 
 

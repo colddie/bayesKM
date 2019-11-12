@@ -2,6 +2,11 @@
 /// @brief Header file for libtpcmodext.
 /// @author Vesa Oikonen
 ///
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*****************************************************************************/
 #ifndef _LIBTPCMODEXT_H
 #define _LIBTPCMODEXT_H
@@ -106,12 +111,12 @@ int dftMatchTimeunits(DFT *dft1, DFT *dft2, int *tunit2, int verbose);
 /*****************************************************************************/
 // img_mtga.c
 int img_patlak(
-  DFT *input, IMG *dyn_img, int start, int end, linefit_range fit_range, 
+  DFT *input, IMG *dyn_img, int start, int end, linefit_range fit_range, float thrs,
   IMG *ki_img, IMG *ic_img, IMG *nr_img,
   char *status, int verbose
 );
 int img_logan(
-  DFT *input, IMG *dyn_img, int start, int end, linefit_range fit_range,
+  DFT *input, IMG *dyn_img, int start, int end, linefit_range fit_range, float thrs,
   double k2, IMG *vt_img, IMG *ic_img, IMG *nr_img,
   char *status, int verbose
 );
@@ -232,4 +237,8 @@ int clusterTACs(
 /*****************************************************************************/
 
 /*****************************************************************************/
+#endif
+
+#ifdef __cplusplus
+}
 #endif

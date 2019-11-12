@@ -54,10 +54,13 @@ endif (ITK_FOUND)
 # endif (ELASTIX_FOUND)
 
 
+
+# set(TPC_USE_PATH  /home/tsun/bin/tpcclib-master/src/v1)
+# set(TPC_STATIC_PATH /home/tsun/bin/tpcclib-master/build/lib/include)
+set(SOURCE_DIR /home/tsun/work/bayesKM/memc_pros)
 set(ARMA_USE_FILE /home/tsun/bin/armadillo-9.400.4/install/include)
 set(OPTIM_USE_FILE  /home/tsun/bin/optim-master/install/include/optim)
-set(TPC_USE_PATH  /home/tsun/bin/tpcclib-master/src/v1)
-set(TPC_STATIC_PATH /home/tsun/bin/tpcclib-master/build/lib/include)
+set(FIT_USE_FILE /home/tsun/work/bayesKM/fit_pros)
 set(SPLINE_USE_PATH /home/tsun/bin/spline-master/src)
 
 option(SimpleITK_TESTING_NOSHOW "Disable the Show function in SimpleITK testing." ON)
@@ -66,44 +69,74 @@ Message(STATUS "external libraries:" ${SimpleITK_LIBRARIES})
 Message(STATUS "external libraries:" ${ITK_LIBRARIES})
 Message(STATUS "external libraries:" ${ELASTIX_LIBRARIES})
 
+add_subdirectory(libtpcimgp)
+add_subdirectory(libtpcmisc)
+add_subdirectory(libtpccurveio)
+add_subdirectory(libtpcmodel)
+add_subdirectory(libtpcsvg)
+add_subdirectory(libtpcmodext)
+add_subdirectory(libtpcimgio)
 
 
-
-# link_directories ( /storage0/home/tsun/bin/elastix-develop/install )
+#link_directories ( /storage0/home/tsun/bin/elastix-develop/install )
 #link_directories ( /cm/shared/apps/hdf5/1.10.1/lib/ )
-link_directories(/home/tsun/bin/tpcclib-master/build/lib)
+# include_directories (${TPC_USE_PATH}/libtpcmisc) 
+# include_directories (${TPC_USE_PATH}/libtpccurveio) 
+# include_directories (${TPC_USE_PATH}/libtpcmodel) 
+# include_directories (${TPC_USE_PATH}/libtpcsvg) 
+# include_directories (${TPC_USE_PATH}/libtpcimgio) 
+# include_directories (${TPC_USE_PATH}/libtpcimgp) 
+# include_directories (${TPC_USE_PATH}/libtpcmodext) 
+# include_directories (/home/tsun/bin/tpcclib-master/build/lib/include)
 
-include_directories (${TPC_USE_PATH}/libtpcmisc) 
-include_directories (${TPC_USE_PATH}/libtpccurveio) 
-include_directories (${TPC_USE_PATH}/libtpcmodel) 
-include_directories (${TPC_USE_PATH}/libtpcsvg) 
-include_directories (${TPC_USE_PATH}/libtpcimgio) 
-include_directories (${TPC_USE_PATH}/libtpcimgp) 
-include_directories (${TPC_USE_PATH}/libtpcmodext) 
-include_directories (/home/tsun/bin/tpcclib-master/build/lib/include)
+# include_directories(${SOURCE_DIR})
+# include_directories(${SOURCE_DIR}/libtpcimgp/)
+# include_directories(${SOURCE_DIR}/libtpcsvg/)
+# include_directories(${SOURCE_DIR}/libtpcimgio/)
+# include_directories(${SOURCE_DIR}/libtpcmodel/)
+# include_directories(${SOURCE_DIR}/libtpcmodext/)
+# include_directories(${SOURCE_DIR}/libtpcmisc/)
+# include_directories(${SOURCE_DIR}/libtpccurveio/)
+
+# file(GLOB TPC_USE_SOURCE
+#     "/home/tsun/work/bayesKM/memc_pros/libtpcimgp/*"
+#     "/home/tsun/work/bayesKM/memc_pros/libtpcsvg/*"
+#     "/home/tsun/work/bayesKM/memc_pros/libtpcimgio/*"
+#     "/home/tsun/work/bayesKM/memc_pros/libtpcmodel/*"
+#     "/home/tsun/work/bayesKM/memc_pros/libtpcmodext/*"
+#     "/home/tsun/work/bayesKM/memc_pros/libtpcmisc/*"
+#     "/home/tsun/work/bayesKM/memc_pros/libtpccurveio/*"
+# )
+
 
 #add_executable ( meKineticRigid meKineticRigid.cxx libtpcimgp.h libtpcmisc.h tpcclibConfig.h  )  #patlak_idl.cxx
-add_library(meKineticRigid SHARED meKineticRigid.cxx patlak_c.cxx meKineticRigid.h libtpcimgp.h libtpcmisc.h)
+add_library(meKineticRigid SHARED meKineticRigid.cxx patlak_c.cxx meKineticRigid.h)
+# ${FIT_USE_FILE}/petc99.cxx ${FIT_USE_FILE}/bootstrapr.cxx ${FIT_USE_FILE}/pearson.cxx 
+# ${FIT_USE_FILE}/nnls.cxx ${FIT_USE_FILE}/gaussdev.cxx ${FIT_USE_FILE}/bobyqa.cxx
+# ${FIT_USE_FILE}/powell.cxx ${FIT_USE_FILE}/tgo.h ${FIT_USE_FILE}/tgo.cxx)
 #file(GLOB ITK_LIBRARIES "/storage0/home/tsun/bin/InsightToolkit-4.13.1/bin/lib/*.so")
 
-target_include_directories (meKineticRigid PRIVATE ${ARMA_USE_FILE} ${OPTIM_USE_FILE} ${SPLINE_USE_PATH} ${TPC_STATIC_PATH})
+target_include_directories (meKineticRigid PRIVATE ${ARMA_USE_FILE} ${OPTIM_USE_FILE} ${SPLINE_USE_PATH}
+${CMAKE_CURRENT_SOURCE_DIR}/include)  # ${TPC_STATIC_PATH})
 
-#Dynamic/Shared Libs
+# Dynamic/Shared Libs
 target_link_libraries(meKineticRigid ${SimpleITK_LIBRARIES} ${ITK_LIBRARIES} 
 /home/tsun/bin/armadillo-9.400.4/install/lib64/libarmadillo.so 
 /home/tsun/bin/optim-master/install/lib/liboptim.so
-gomp)
+gomp libtpcimgp libtpcsvg libtpcimgio libtpcmodel libtpcmodext libtpcmisc libtpccurveio)
 
-target_link_libraries(meKineticRigid 
-/home/tsun/bin/tpcclib-master/build/lib/libtpcimgp.a
-/home/tsun/bin/tpcclib-master/build/lib/libtpcimgio.a
-/home/tsun/bin/tpcclib-master/build/lib/libtpccurveio.a
-/home/tsun/bin/tpcclib-master/build/lib/libtpcmisc.a
-/home/tsun/bin/tpcclib-master/build/lib/libtpcmodel.a
-/home/tsun/bin/tpcclib-master/build/lib/libtpcmodext.a
-/home/tsun/bin/tpcclib-master/build/lib/libtpcsvg.a)
-#tpcimgp_shared tpcimgio_shared tpccurveio_shared tpcmodext_shared
-#tpcmodel_shared tpccurveio_shared tpcmisc_shared)
+# # Static libs
+# link_directories(/home/tsun/bin/tpcclib-master/build/lib)
+# target_link_libraries(meKineticRigid 
+# /home/tsun/bin/tpcclib-master/build/lib/libtpcimgp.a
+# /home/tsun/bin/tpcclib-master/build/lib/libtpcimgio.a
+# /home/tsun/bin/tpcclib-master/build/lib/libtpccurveio.a
+# /home/tsun/bin/tpcclib-master/build/lib/libtpcmisc.a
+# /home/tsun/bin/tpcclib-master/build/lib/libtpcmodel.a
+# /home/tsun/bin/tpcclib-master/build/lib/libtpcmodext.a
+# /home/tsun/bin/tpcclib-master/build/lib/libtpcsvg.a)
+# #tpcimgp_shared tpcimgio_shared tpccurveio_shared tpcmodext_shared
+# #tpcmodel_shared tpccurveio_shared tpcmisc_shared)
 
 
 

@@ -2,6 +2,13 @@
 /// @brief Header file for libtpcimgp.
 /// @author Vesa Oikonen
 ///
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
 #ifndef _LIBTPCIMGP_H
 #define _LIBTPCIMGP_H
 /*****************************************************************************/
@@ -139,7 +146,7 @@ int imgsegmThresholdMask(
   IMG *img, float minValue, float maxValue, IMG *timg
 );
 int imgsegmThresholdByMask(
-  IMG *img, IMG *templatexx, float minValue, float maxValue     // conflict with C++ template..
+  IMG *img, IMG *templater, float minValue, float maxValue
 );
 int imgsegmThreshold(
   IMG *img, float minValue, float maxValue
@@ -230,3 +237,7 @@ float getAngle(point, point);
 
 /*****************************************************************************/
 #endif // _LIBTPCIMGP_H
+
+#ifdef __cplusplus
+}
+#endif

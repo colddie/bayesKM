@@ -15,6 +15,7 @@
 #include <string.h>
 #include <time.h>
 /******************************************************************************/
+
 #include "libtpcmisc.h"
 #include "libtpcmodel.h"
 #include "libtpccurveio.h"
@@ -44,7 +45,7 @@
 /**
  *  Main
  */
-int patlak_c(unsigned int frameNr, double *t0, double *t1,double *tac, double *ctt,
+extern "C" int patlak_c(unsigned int frameNr, double *t0, double *t1,double *tac, double *ctt,
                double tstart, double tstop, double *output, unsigned int verbose, 
                unsigned int llsq_model,
                unsigned int isweight, double *weights)         //Pure c does not require extern  "C" 
@@ -214,7 +215,7 @@ int patlak_c(unsigned int frameNr, double *t0, double *t1,double *tac, double *c
   /* Interpolate and integrate data to pet times */
   ret=dftInterpolate(&temp, &data, &input, status, verbose);
   dftEmpty(&temp);
-  // if(ret!=0) return 4; if(ret==2) printf('nothing to be done for interpolation!')
+  if(ret!=0) return 4; if(ret==2) {printf("nothing to be done for interpolation!");}
 
   if(verbose>9) {
     printf("\nIDL input data:\n");
@@ -554,6 +555,9 @@ int patlak_c(unsigned int frameNr, double *t0, double *t1,double *tac, double *c
   output[2] = KiSD;
   output[3] = IcSD;
   output[4] = SWSS;           //correlation coefficient
+
+  // clean memory! dftEmpty(&temp);
+  resEmpty(&res); dftEmpty(&input); dftEmpty(&data); 
 
 
 //  fclose(pfile);

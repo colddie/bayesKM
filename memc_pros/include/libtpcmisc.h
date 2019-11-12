@@ -2,6 +2,12 @@
 /// @brief Header file for libtpcmisc.
 /// @author Vesa Oikonen
 ///
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #ifndef _LIBTPCMISC_H_
 #define _LIBTPCMISC_H_
 /*****************************************************************************/
@@ -290,7 +296,7 @@ typedef struct {
 } IFT;
 /*****************************************************************************/
 /** Verbose prints from IFT functions */
-int IFT_TEST;
+// int IFT_TEST;
 /*****************************************************************************/
 //void libift_printdate(FILE *fp);
 void iftSetStatus(IFT *ift, int status);
@@ -324,7 +330,7 @@ int iftdup(IFT *ift1, IFT *ift2);
 char* strdup(const char* s);
 #endif
 ///// #ifndef HAVE_STRCASESTR
-// extern char *strcasestr(const char *haystack, const char *needle);    /// turn off because the conflict with armadillo!
+//extern char *strcasestr(const char *haystack, const char *needle);
 ///// #endif
 /*****************************************************************************/
 
@@ -503,3 +509,7 @@ void statSortFloat(float *data, unsigned int n, int order);
 
 /*****************************************************************************/
 #endif /* LIBTPCMISC */
+
+#ifdef __cplusplus
+}
+#endif
