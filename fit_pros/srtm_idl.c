@@ -391,6 +391,7 @@ dftPrint(&data);
   resEmpty(&res);
   dftEmpty(&data);
   dftEmpty(&temp);
+  dftEmpty(&input);
 //   if(doBootstrap) { free(matrix); }
   return(0);
 }

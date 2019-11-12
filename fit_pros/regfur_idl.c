@@ -63,7 +63,7 @@ int regfur_idl(int argc, char **argv)
   unsigned int    frameNr;
   const char *debugfile = "debug.txt";
 
-  dftInit(&data); dftInit(&input); dftInit(&auc); dftInit(&avg); resInit(&res);
+  dftInit(&data); dftInit(&input); dftInit(&auc); dftInit(&avg); //resInit(&res);
 
   /* 
    make sure interpolation and integration has been done before hand!

@@ -316,10 +316,10 @@ if (opt_data.fitmethod == 1) {
     optim::algo_settings_t settings;
 	arma::vec upper_bounds(opt_data.parNr);
 	arma::vec lower_bounds(opt_data.parNr);
-	lower_bounds[0] = -0.3;	upper_bounds[0] =  0.3;
-	lower_bounds[1] = -0.3;	upper_bounds[1] =  0.3;
+	lower_bounds[0] = 0.0;	upper_bounds[0] =  0.0;
+	lower_bounds[1] = 0.0;	upper_bounds[1] =  0.0;
 	lower_bounds[2] = -0.3;	upper_bounds[2] =  0.3;
-	lower_bounds[3] = -8.0;	upper_bounds[3] =  8.0;	
+	lower_bounds[3] = 0.0;	upper_bounds[3] =  0.0;	
 	lower_bounds[4] = -8.0;	upper_bounds[4] =  8.0;	
 	lower_bounds[5] = -8.0;	upper_bounds[5] =  8.0;		
 
@@ -348,12 +348,12 @@ if (opt_data.fitmethod==2) {
     tgoNr=300; iterNr=0; neighNr=5;
     parNr=6;
     iterNr=0;
-	pmin[0] =  0.0;	pmax[0] =  0.0;
-	pmin[1] =  0.0;	pmax[1] =  0.0;
+	pmin[0] = 0.0;	pmax[0] =  0.0;
+	pmin[1] = 0.0;	pmax[1] =  0.0;
 	pmin[2] = -0.3;	pmax[2] =  0.3;
-	pmin[3] =  0.0;	pmax[3] =  0.0;	
+	pmin[3] = 0.0;	pmax[3] =  0.0;	
 	pmin[4] = -8.0;	pmax[4] =  8.0;
-	pmin[5] = -6.0; pmax[5] =  6.0;
+	pmin[5] = -8.0; pmax[5] =  8.0;
 
     double wss=0;
     double *output = (double *)malloc(parNr*sizeof(double));   // not needed!

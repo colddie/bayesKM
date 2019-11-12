@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 project(meKineticRigid)
 # set_target_properties(idlrtkInterface PROPERTIES LINKER_LANGUAGE CXX)
 
-set (CMAKE_CXX_FLAGS "-fPIC")
+set (CMAKE_CXX_FLAGS "-fPIC -std=c++11")
 
 foreach(p
     CMP0042 # CMake 3.0

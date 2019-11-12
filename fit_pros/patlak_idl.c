@@ -550,6 +550,9 @@ int patlak_idl(int argc,  float * argv[])         //Pure c does not require exte
   output[4] = SWSS;           //correlation coefficient
 
 
+  // clean memory! dftEmpty(&temp);
+  resEmpty(&res); dftEmpty(&input); dftEmpty(&data); 
+
 //  fclose(pfile);
   //  free(theta);
   //  free(dv);

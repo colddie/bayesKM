@@ -448,7 +448,6 @@ if(verbose>0) {printf( "\n");   resPrint(&res);}
   resEmpty(&res);
   dftEmpty(&data);
   dftEmpty(&input);
-  // dftEmpty(&temp);
   return(0);
 }
 

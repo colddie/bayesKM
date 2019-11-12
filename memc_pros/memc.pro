@@ -122,7 +122,7 @@ stop
 
 ; ----------------------
 ; Call external optimization program 
-debug = 1L
+debug = 0L
 tstart = float(tstart)
 tstop = float(tstop)
 nframe = (size(imgs1))[4]

@@ -530,7 +530,8 @@ if (verbose>1) {
 
 
 
-
+  // clean memory! dftEmpty(&temp);
+  resEmpty(&res); dftEmpty(&input); dftEmpty(&data); 
 
 
 
