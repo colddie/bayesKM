@@ -13,8 +13,8 @@ isotope = 'F-18'     ;'C-11'   ; 'F-18'
 compartment = 'C2'    ; 'C1', 'C2', 'srtm', 'rtcm'
 bound = 0.05*0             ; high the high variance in Ks
 tacnoiselevel = 0.005     ; higher the high noise
-nframe = 158
-rebin_fac = 0.5
+nframe =  158   ; by default, deprecated
+rebin_fac = 4.0; 0.5
 fwhm = 5.0
 
 case tracer of 
@@ -268,8 +268,8 @@ endcase
   OpenR, lun, inputfile, /GET_LUN
   ReadF, lun, data
   Free_Lun, lun
-  plasma_t = (data.plasma_t)[0:nframe-1]   ; truncate equilibrium
-  plasma_c = (data.plasma_c)[0:nframe-1]
+  plasma_t = (data.plasma_t)   ;[0:nframe-1]   ; truncate equilibrium
+  plasma_c = (data.plasma_c)   ;[0:nframe-1]
   plasma_t = congrid(plasma_t,n_elements(plasma_t)/rebin_fac,/center,/interp)
     ; rebin(plasma_t,n_elements(plasma_t)/rebin_fac)
   plasma_c = congrid(plasma_c,n_elements(plasma_c)/rebin_fac,/center,/interp)

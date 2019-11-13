@@ -53,10 +53,10 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 {
 // printf("evaluate func once...");
 	const char *debugfile  = "debug.txt";
-	// FILE *pfile = fopen(debugfile, "a+");
 	ll_data* objfn_data = reinterpret_cast<ll_data*>(opt_data);
 	int verbose = objfn_data->verbose;
 	int nframe = objfn_data->nframe;
+	int parNr  = objfn_data->parNr;
 	int *index = objfn_data->index; 
 	float *rigmotion = objfn_data->rigmotion;
 	sitk::Image imgs = objfn_data->imgs;
@@ -64,22 +64,52 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	sitk::Image imgs1 = sitk::Image( dims , sitk::sitkFloat32);
 
 
-//    // b-spline interpoolate rigmotion
-// 	rigmotions1 = (float *) malloc(nframe*sizeof(float));
-// 	rigmotions2 = (float *) malloc(nframe*sizeof(float));
-// 	rigmotions3 = (float *) malloc(nframe*sizeof(float));
-// 	rigmotions4 = (float *) malloc(nframe*sizeof(float));
-// 	rigmotions5 = (float *) malloc(nframe*sizeof(float));
-// 	rigmotions6 = (float *) malloc(nframe*sizeof(float));  
-// 	for(int iframe=0;iframe<objfn_data->nframe;iframe++ ) { 
-// 		int tmpIndex = index[iframe] - 1;
-// 		rigmotions1[iframe] = rigmotion[tmpIndex*6];
-// 		rigmotions2[iframe] = rigmotion[tmpIndex*6+1];
-// 		rigmotions3[iframe] = rigmotion[tmpIndex*6+2];
-// 		rigmotions4[iframe] = rigmotion[tmpIndex*6+3];
-// 		rigmotions5[iframe] = rigmotion[tmpIndex*6+4];
-// 		rigmotions6[iframe] = rigmotion[tmpIndex*6+5];
-// 	}
+if (0) {
+   // b-spline interpoolate rigmotion
+	rigmotions1 = (float *) malloc(parNr*sizeof(float));
+	rigmotions2 = (float *) malloc(parNr*sizeof(float));
+	rigmotions3 = (float *) malloc(parNr*sizeof(float));
+	rigmotions4 = (float *) malloc(parNr*sizeof(float));
+	rigmotions5 = (float *) malloc(parNr*sizeof(float));
+	rigmotions6 = (float *) malloc(parNr*sizeof(float));  
+
+	for(int ipar;ipar<parNr;ipar++ ) { 	
+		for (int iframe;iframe<nframe;iframe++) {
+			int tmpIndex = index[iframe] - 1;
+			rigmotions1[ipar] = vals[tmpIndex*6];
+			rigmotions2[iframe] = vals[tmpIndex*6+1];
+			rigmotions3[iframe] = vals[tmpIndex*6+2];
+			rigmotions4[iframe] = vals[tmpIndex*6+3];
+			rigmotions5[iframe] = vals[tmpIndex*6+4];
+			rigmotions6[iframe] = vals[tmpIndex*6+5];
+		}
+
+	}
+
+	for(int iframe=0;iframe<objfn_data->nframe;iframe++ ) { 
+		int tmpIndex = index[iframe] - 1;
+		rigmotions1[iframe] = vals[tmpIndex*6];
+		rigmotions2[iframe] = vals[tmpIndex*6+1];
+		rigmotions3[iframe] = vals[tmpIndex*6+2];
+		rigmotions4[iframe] = vals[tmpIndex*6+3];
+		rigmotions5[iframe] = vals[tmpIndex*6+4];
+		rigmotions6[iframe] = vals[tmpIndex*6+5];
+	}
+
+std::vector<double> X(nframe),Y1(nframe),Y2(nframe),Y3(nframe),Y4(nframe),Y5(nframe),Y6(nframe);
+for (int iframe=0;iframe<objfn_data->nframe;iframe++ ) {
+    X[iframe] = plasma_t[iframe]; Y1[iframe] = rigmotions1[iframe];
+    X[iframe] = plasma_t[iframe]; Y2[iframe] = rigmotions2[iframe];
+    X[iframe] = plasma_t[iframe]; Y3[iframe] = rigmotions3[iframe];
+    X[iframe] = plasma_t[iframe]; Y4[iframe] = rigmotions4[iframe];
+    X[iframe] = plasma_t[iframe]; Y5[iframe] = rigmotions5[iframe];
+    X[iframe] = plasma_t[iframe]; Y6[iframe] = rigmotions6[iframe];
+}
+
+tk::spline s1; s1.set_points(X,Y1); tk::spline s1; s1.set_points(X,Y1);
+tk::spline s1; s1.set_points(X,Y1); tk::spline s1; s1.set_points(X,Y1);
+tk::spline s1; s1.set_points(X,Y1); tk::spline s1; s1.set_points(X,Y1);
+
 
 //    std::vector<double> X(5), Y(5);
 //    X[0]=0.1; X[1]=0.4; X[2]=1.2; X[3]=1.8; X[4]=2.0;
@@ -91,6 +121,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 //    printf("spline at %f is %f\n", x, s(x));
 
 //    return EXIT_SUCCESS;
+}
 
     // sitk::Image resampled_vectorout(dims,sitk::sitkVectorFloat32,objfn_data->nframe);
 	std::vector<sitk::Image> resampled_vectorout;
@@ -124,15 +155,18 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 		translation[1] = vals[tmpIndex*6+4];
 		translation[2] = vals[tmpIndex*6+5];
 
+		// sitk::AffineTransform euler_transform(3);
+		// euler_transform.SetCenter(rotation_center);  
+		// std::vector<double> matrix0 = euler_transform.GetMatrix();
+		// std::vector<double> matrix = { cos(theta_z),-sin(theta_z),0,sin(theta_z),cos(theta_z),0,0,0,1 }; 
+        // euler_transform.SetMatrix(matrix);
 
 		sitk::Euler3DTransform euler_transform;
 		// euler_transform.SetCenter(rotation_center);     // not neccessary as auto center to image center
-		euler_transform.SetRotation(theta_x, theta_y, theta_z);
+		euler_transform.SetRotation(theta_x, theta_y, theta_z);		
 		euler_transform.SetTranslation(translation);
-		// resampled_image = resample(image, euler_transform)
-		//   parameterMap = sitk.GetDefaultParameterMap('translation');
-		//   transformixImageFilter = sitk.TransformixImageFilter();
-		//   transformixImageFilter.SetTransformParameterMap(transformParameterMap);
+
+
 
     if (verbose == 1 ) {
 		FILE *pfile = fopen(debugfile, "a+");
@@ -151,6 +185,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 		extractIndex[3] = iframe;
 
 		sitk::Image out = sitk::Extract(imgs, extractSize,extractIndex);
+		euler_transform.SetCenter(out.TransformContinuousIndexToPhysicalPoint(rotation_center));  //perform transformation and resampling in physical space and not index space
 		sitk::Image resampled_out = sitk::Resample(out, euler_transform);
         resampled_vectorout.push_back(resampled_out);
 		// sitk::ImageFileWriter writer2;
@@ -187,9 +222,9 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	// double *plasma_tt = reinterpret_cast<double*>(objfn_data->plasma_tt);
 	// double *plasma_c = reinterpret_cast<double*>(objfn_data->plasma_c);
 	for (int iframe=0;iframe<nframe;iframe++) { weights[iframe] = 1.0; }
-	for (int jplane=1;jplane<dims[2];jplane++)	{    //evrey other two
-	for (int jrow=0;jrow<dims[1]-6;jrow+=6) {
-	for (int jcol=0;jcol<dims[0]-6;jcol+=6) 
+	for (int jplane=0;jplane<dims[2];jplane++)	{    //evrey other two
+	for (int jrow=0;jrow<dims[1];jrow+=1) {
+	for (int jcol=0;jcol<dims[0];jcol+=1) 
 	{
 		// if ( (jrow != 120) && (jcol != 120) ) { continue; }
 		double *tac = (double *)malloc(nframe*sizeof(double));    // cast float to double?
@@ -208,7 +243,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 
 		int success = patlak_c(nframe, objfn_data->plasma_tt, objfn_data->plasma_t, tac, 
 						objfn_data->plasma_c,(double)objfn_data->tstart,(double)objfn_data->tstop,output,0,0,0,weights);    //debug,llsq_model,isweight
-		var += abs(output[2])+abs(output[3]);   // absolute
+		var += abs(output[2]);   //+abs(output[3]);   // absolute
 
 		if (verbose==1) { 
 			// if (output[0] > 0.0) { printf("positive detected! \n"); }
@@ -319,9 +354,9 @@ if (opt_data.fitmethod == 1) {
 	lower_bounds[0] = 0.0;	upper_bounds[0] =  0.0;
 	lower_bounds[1] = 0.0;	upper_bounds[1] =  0.0;
 	lower_bounds[2] = -0.3;	upper_bounds[2] =  0.3;
-	lower_bounds[3] = 0.0;	upper_bounds[3] =  0.0;	
+	lower_bounds[3] = -8.0;	upper_bounds[3] =  8.0;	
 	lower_bounds[4] = -8.0;	upper_bounds[4] =  8.0;	
-	lower_bounds[5] = -8.0;	upper_bounds[5] =  8.0;		
+	lower_bounds[5] = 0.0;	upper_bounds[5] =  0.0;		
 
 	settings.vals_bound = true;
     settings.lower_bounds = lower_bounds;
@@ -345,15 +380,14 @@ if (opt_data.fitmethod==2) {
     double pmin[6], pmax[6];
     bool TGO_LOCAL_INSIDE=0;
     bool TGO_SQUARED_TRANSF=1;
-    tgoNr=300; iterNr=0; neighNr=5;
+    tgoNr=30; iterNr=10; neighNr=5;
     parNr=6;
-    iterNr=0;
 	pmin[0] = 0.0;	pmax[0] =  0.0;
 	pmin[1] = 0.0;	pmax[1] =  0.0;
 	pmin[2] = -0.3;	pmax[2] =  0.3;
-	pmin[3] = 0.0;	pmax[3] =  0.0;	
+	pmin[3] = -8.0;	pmax[3] =  8.0;	
 	pmin[4] = -8.0;	pmax[4] =  8.0;
-	pmin[5] = -8.0; pmax[5] =  8.0;
+	pmin[5] = 0.0; pmax[5] =  0.0;
 
     double wss=0;
     double *output = (double *)malloc(parNr*sizeof(double));   // not needed!

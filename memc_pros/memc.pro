@@ -1,7 +1,9 @@
 
 ; ----------------------
 ; Generated phantom with two-tissue irreversble compartmetn model
-pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/fdgC2rebin0.500000/'
+pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/fdgC2rebin4.00000/'
+; pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/fdgC2rebin0.500000/'
+
 imgs = niread_nii(pad+'actimg_fdgC2.nii',orientation='RAS') 
 ; imgs = niread_nii('actimg_fdgC2_0.00000_0.00500000_noise.nii',orientation='RAS') 
 tmp = read_ascii(pad+'plasma_t.txt')
@@ -20,8 +22,8 @@ nrcols = (size(imgs))[1]
 nrrows = (size(imgs))[2]
 nrplanes = (size(imgs))[3]
 nframes= n_elements(plasma_t)
-tstart = 20
-tstop  = 60
+tstart = 60
+tstop  = 110
 output = double(fltarr(5)) 
 debug  = 0
 llsq_model = 0
@@ -62,8 +64,8 @@ stop
 
 
 ; motion1 fast motion (in-plane only)
-parms = [10/180.*!pi*0,0.0,0.0,2.0,5.0,0.0,1.,1.,1.,0,0,0]
-imovframe = nframes/2
+parms = [10/180.*!pi,0.0,0.0,2.0*0,5.0*0,0.0,1.,1.,1.,0,0,0]
+imovframe = 30 ;nframes/3*2
 imgs = reform(imgs,nrcols,nrrows,nrplanes,nframes)
 imgs1 = fltarr(nrcols,nrrows,nrplanes,nframes)
 for iframe = 0, imovframe-1 do  $
@@ -83,8 +85,8 @@ endfor
 ;Patlak for moving phantom 
 ; Patlak for phantom
 nframes= n_elements(plasma_t)
-tstart = 20
-tstop  = 60
+tstart = 60
+tstop  = 110
 output = double(fltarr(5)) 
 debug  = 0L
 llsq_model = 0
