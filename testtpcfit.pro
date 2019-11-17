@@ -26,7 +26,7 @@
 ;   "     Tissue density in MR calculation; default is 1.0 g/ml.",
 
   useref = 0;   use reference region as input?
-  testmode = 'patlak';   '1TCM','2TCM','patlak','logan','fur','mrtm','sim_patlak','sim_logan','SRTM','2TCMrev','MBF', 'pCT'
+  testmode = 'pCT';   '1TCM','2TCM','patlak','logan','fur','mrtm','sim_patlak','sim_logan','SRTM','2TCMrev','MBF', 'pCT'
 
 
 case testmode of

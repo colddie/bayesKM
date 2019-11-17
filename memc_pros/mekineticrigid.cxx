@@ -57,7 +57,9 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	int verbose = objfn_data->verbose;
 	int nframe = objfn_data->nframe;
 	int parNr  = objfn_data->parNr;
+	int pparNr = parNr/6;
 	int *index = objfn_data->index; 
+	int *Findex = objfn_data->Findex;
 	float *rigmotion = objfn_data->rigmotion;
 	sitk::Image imgs = objfn_data->imgs;
 	std::vector<unsigned int> dims = imgs.GetSize();
@@ -73,19 +75,6 @@ if (0) {
 	rigmotions5 = (float *) malloc(parNr*sizeof(float));
 	rigmotions6 = (float *) malloc(parNr*sizeof(float));  
 
-	for(int ipar;ipar<parNr;ipar++ ) { 	
-		for (int iframe;iframe<nframe;iframe++) {
-			int tmpIndex = index[iframe] - 1;
-			rigmotions1[ipar] = vals[tmpIndex*6];
-			rigmotions2[iframe] = vals[tmpIndex*6+1];
-			rigmotions3[iframe] = vals[tmpIndex*6+2];
-			rigmotions4[iframe] = vals[tmpIndex*6+3];
-			rigmotions5[iframe] = vals[tmpIndex*6+4];
-			rigmotions6[iframe] = vals[tmpIndex*6+5];
-		}
-
-	}
-
 	for(int iframe=0;iframe<objfn_data->nframe;iframe++ ) { 
 		int tmpIndex = index[iframe] - 1;
 		rigmotions1[iframe] = vals[tmpIndex*6];
@@ -96,20 +85,28 @@ if (0) {
 		rigmotions6[iframe] = vals[tmpIndex*6+5];
 	}
 
-std::vector<double> X(nframe),Y1(nframe),Y2(nframe),Y3(nframe),Y4(nframe),Y5(nframe),Y6(nframe);
-for (int iframe=0;iframe<objfn_data->nframe;iframe++ ) {
-    X[iframe] = plasma_t[iframe]; Y1[iframe] = rigmotions1[iframe];
-    X[iframe] = plasma_t[iframe]; Y2[iframe] = rigmotions2[iframe];
-    X[iframe] = plasma_t[iframe]; Y3[iframe] = rigmotions3[iframe];
-    X[iframe] = plasma_t[iframe]; Y4[iframe] = rigmotions4[iframe];
-    X[iframe] = plasma_t[iframe]; Y5[iframe] = rigmotions5[iframe];
-    X[iframe] = plasma_t[iframe]; Y6[iframe] = rigmotions6[iframe];
+	// X=plasma_t;
+	// Y1= rigmtoions1;
+
+std::vector<double> X(pparNr),Y1(pparNr),Y2(pparNr),Y3(pparNr),Y4(pparNr),Y5(pparNr),Y6(pparNr);
+for (int ipar;ipar<pparNr;ipar++  ) {
+	X[ipar] = plasma_t[Findex[ipar]]; Y1[ipar] = rigmotions1[Findex[ipar]];
+	Y2[ipar] = rigmotions2[Findex[ipar]];
+	Y3[ipar] = rigmotions3[Findex[ipar]];
+	Y4[ipar] = rigmotions4[Findex[ipar]];
+	Y5[ipar] = rigmotions5[Findex[ipar]];
+	Y6[ipar] = rigmotions6[Findex[ipar]];
 }
 
-tk::spline s1; s1.set_points(X,Y1); tk::spline s1; s1.set_points(X,Y1);
-tk::spline s1; s1.set_points(X,Y1); tk::spline s1; s1.set_points(X,Y1);
-tk::spline s1; s1.set_points(X,Y1); tk::spline s1; s1.set_points(X,Y1);
+tk::spline s1; s1.set_points(X,Y1); tk::spline s2; s2.set_points(X,Y2);
+tk::spline s3; s3.set_points(X,Y3); tk::spline s4; s4.set_points(X,Y4);
+tk::spline s5; s5.set_points(X,Y5); tk::spline s6; s6.set_points(X,Y6);
 
+for (int iframe=0;iframe<nframe-1;iframe++) {
+   rigmotions[iframe] = s1[plasma_t[iframe]];
+
+
+}
 
 //    std::vector<double> X(5), Y(5);
 //    X[0]=0.1; X[1]=0.4; X[2]=1.2; X[3]=1.8; X[4]=2.0;
@@ -326,7 +323,8 @@ extern "C"  int meKineticRigid(int argc, float* argv[])     //meKineticRigid
 	opt_data.fitmethod   =  *(int *)   argv[9];
 	opt_data.rigmotion   =  (float *)  argv[10];
 	opt_data.index       =  (int *)   argv[11];
-	opt_data.verbose     =  *(int *)   argv[12];
+	opt_data.Findex      =  (int *)   argv[12];
+	opt_data.verbose     =  *(int *)   argv[13];
 
 	sitk::ImageFileReader reader;
 	reader.SetFileName( imgfilename );

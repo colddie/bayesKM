@@ -146,7 +146,42 @@ fitIndex = lonarr(nframe)
 fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
 success = call_external(lib, 'meKineticRigid', nframe, imgfilename, parms0, tstart, tstop, $
                         double(plasma_tt),double(plasma_t), double(plasma_c), model, fitmethod,rigmotion, $
-                         fitIndex, debug)
+                         fitIndex, 0, debug)
+
+
+
+
+
+stop
+
+
+
+; ----------------------
+; Call external optimization program 
+debug = 0L
+tstart = float(tstart)
+tstop = float(tstop)
+nframe = (size(imgs1))[4]
+imgfilename = pad+'memc_movingPhantom.nii'
+lib = 'build/libmeKineticRigid.so'
+model = 0   ; 0=patlak, 1=logan
+fitmethod = 2L
+plasma_tt = [[0], plasma_t[0:n_elements(plasma_t)-2]] 
+parms0 = parms *0   ;;
+; parms0[0] = parms[1]
+; parms0[1] = parms[2]
+; parms0[2] = parms[0]
+; parms0[3] = parms[5]
+; parms0[4] = parms[3]
+; parms0[5] = parms[4]
+nframeToFit = 3 ;;
+rigmotion = fltarr(6,nframeToFit)
+fitIndex = lonarr(nframe)
+fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
+frameIndex = [28,32,36]
+success = call_external(lib, 'meKineticRigid', nframe, imgfilename, parms0, tstart, tstop, $
+                        double(plasma_tt),double(plasma_t), double(plasma_c), model, fitmethod,rigmotion, $
+                         fitIndex, frameIndex, debug)
 
 
 

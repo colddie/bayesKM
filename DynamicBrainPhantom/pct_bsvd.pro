@@ -57,29 +57,40 @@ Pro pct_bsvd, inmap,aif,dt,lambda,m,mask, $
 
 
 ; Temporal interpolation
+; Note the permution of the input matrix
+
 
 if (size(inmap))[0] eq 1 then begin
     print, "Input: 1D voxel supported"  
     nframe = (size(inmap))[1]
     height = 1
     width  = 1
+    depth  = 1
 endif else if (size(inmap))[0] eq 2 then begin
    print, "Input: 2D image supported"  
+    inmap = transpose(inmap,[2,0,1])
     nframe = (size(inmap))[1]
     height = (size(inmap))[2]
     width  = (size(inmap))[3]
+    depth  = 1
 endif else begin
-   print, "Input: 3D image not supported"  
+   print, "Input: 3D image supported"  
+    inmap = transpose(inmap,[3,0,1,2])
+    nframe = (size(inmap))[1]
+    height = (size(inmap))[2]
+    width  = (size(inmap))[3]
+    depth  = (size(inmap))[4]
+  ;  stop
 endelse
 
 ; Initialization
-delaymap = fltarr(height,width)
+delaymap = fltarr(height,width,depth)
 cbfmap   = delaymap*0
 cbvmap   = delaymap*0
 mttmap   = delaymap*0
 
 if n_elements(mask) lt 2 then $
-    mask = fltarr(height,width)+1.0 
+    mask = fltarr(height,width,depth)+1.0 
 
 ; Extend AIF by zero-padding
 N  = m*nframe
@@ -100,43 +111,48 @@ maxS = max(diag_matrix(S))
 S[where(S lt lambda*maxS)] = 0
 invD = transpose(V) # pinv(diag_matrix(S)) # U ;invD = V * pinv(diag_matrix(S)) * transpose(U)
 
-k = fltarr(N,height,width)
+k = fltarr(N,height,width,depth)
 
 ; Deconvolution
-for i=0,height-1 do begin
-  for j=0,width-1 do begin
-    if mask[i,j] gt 0 then begin
-      R=invD ## [inmap[*,i,j], fltarr(N-nframe)]   ;; #
-      if R[n_elements(R)-1] gt R[0] then begin
-         idx = where(R eq max(R))
-         delay = N - idx + 1                    ;; see delay.txt
-         R = shift(R,delay)
-         delaymap[i,j] = delay          ; store AIF delay 
-      endif else delay = 0.0
-    endif
-    k[*,i,j] = R
+for p=0,depth-1 do begin
+  print, 'Processing Plane '+ nistring(p)+' ..'
+  for i=0,height-1 do begin
+    for j=0,width-1 do begin
+      if mask[i,j,p] gt 0 then begin
+        R=invD ## [inmap[*,i,j,p], fltarr(N-nframe)]   ;; #
+        if R[n_elements(R)-1] gt R[0] then begin
+          idx = where(R eq max(R))
+          delay = N - idx + 1                    ;; see delay.txt
+          R = shift(R,delay)
+          delaymap[i,j,p] = delay          ; store AIF delay 
+        endif else delay = 0.0
+      endif
+      k[*,i,j,p] = R
+    endfor
   endfor
 endfor
 
-k = k[0:nframe-1,*,*]
+k = k[0:nframe-1,*,*,*]
 
 ; Correct sampling rate
 Rmap = k/dt
 if not keyword_set(first) then first = 0
 if not keyword_set(last) then last = nframe-1
-Rmap1 = Rmap[first:last,*,*];
+Rmap1 = Rmap[first:last,*,*,*];
+
+
+
+
 
 ; stop
 
+
 ; Get CBF from Residuals
 rho = 1.0   ; brain tissue density in g/ml
-
-Rcol    = height   ;(size(R))[2]
-Rrow    = width    ;(size(R))[3]
-mask = fltarr(Rcol,Rrow) + 1.0
+mask = fltarr(height,width,depth) + 1.0
 
 scaling_factor = 60*100/rho;
-cbfmap = scaling_factor * reform(max(Rmap1))
+cbfmap = scaling_factor * reform(max(Rmap1,dimension=1))
 cbfmap = cbfmap > 0.0
 ; cbfmap[where(cbfmap lt 0)] = 0.0;
 ; cbfmap[where(mask eq 0)] = 0.0;
@@ -156,14 +172,14 @@ cbvmap = cbvmap > 0.0
 ; last  = 200 ;;nframe-1
 eps = 1e-7
 ; mttmap = cbvmap / (cbfmap+eps) * 60
-mttmap = reform(total(Rmap1,1)) / (reform(max(Rmap1))+eps);
+mttmap = reform(total(Rmap1,1)) / (reform(max(Rmap1,dimension=1))+eps);
 mttmap = mttmap > 0.0
 ; mttmap[where(mttmap lt 0)] = 0.0;
 ; mttmap[where(mask eq 0)] = 0.0;
 
 
 
-stop
+; stop
 
 
 

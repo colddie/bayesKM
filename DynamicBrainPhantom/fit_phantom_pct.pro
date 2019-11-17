@@ -1,7 +1,7 @@
 ; turn off delay estimation temporally
 test = 0
 debug = 0
-usemotion = 1
+usemotion = 0
 
 
 ; restore, filename='tmp.sav'
@@ -21,7 +21,16 @@ to = indgen(25)*2 +1  ;1:2:49;
 aifs = [0, 0, 0, 0, 25, 105, 220, 350, 440, 485, 430, 300, 180, 110, 104, 108, 115, 125, 115, 108, 98, 90, 98, 108, 112];
 ts = indgen(tstop*10+1)*0.1   ;0:0.1:49;
 aif = interpol(float(aifs),to,ts, /spline);
+nplane = 256;
+ncol   = 256;
+nrow   = 256;
 
+
+goto,line1
+
+
+
+line0:
 
 isweight = 1
 def_pmin = [0.0,0.00001,0.0]     ; cbf, mtt; cbv and ttp are calculated 
@@ -97,13 +106,120 @@ for iplane=153,157 do begin   ;0, nplane-1 do begin
         if test then  stop
         endfor
     endfor
-    
+    cbvall = cbfall * mttall/60;
     
 
 endfor
 
-
 stop
 
+; ---------- compare with reference -------------
+
+
+
+
+
+
+
+
+
+line1:
+; ---------- compare with block-svd ------------
+cbfall1    = fltarr(ncol,nrow,nplane)
+mttall1    = cbfall*0
+delayall1  = cbfall*0
+inmap     = tacall *0
+for iframe = 0, frameNr-1 do $
+     inmap[*,*,*,iframe] = tacall[*,*,*,iframe]-baselineall
+
+lambda = 0.2   ; truncation
+mpad   = 2
+mask   = 0
+dt    /= 1.    ; /=10.
+first  = 0
+last   = 49    ; 200     ; depends ont mtt
+; tac = congrid(tac,10)
+; aif = congrid(aif,10)
+
+
+;--- plane based compromise between speed and memory ----
+inmap = inmap[*,*,153:157,*]
+inmap1 = fltarr(ncol,nrow,5,n_elements(ts))
+for iplane=0,4 do begin   ;0, nplane-1 do begin
+    for irow=0, nrow-1 do begin
+        for icol=0, ncol-1 do begin
+        tac = inmap[icol,irow,iplane,*]
+        tac1 =  interpol(tac,t,ts, /spline);
+        inmap1[icol,irow,iplane,*] = tac1
+        endfor
+    endfor
+endfor
+; tac = inmap1[icol,irow,iplane,*]
+; if total(tac) lt 1e-5 or tac[10] eq tac[20] then continue
+pct_bsvd, inmap1,aif,dt,lambda,mpad,mask, $
+    cbf=cbfmap,cbv=cbvmap,mtt=mttmap,delay=delaymap, k=k, $
+    first=first,last=last
+mttmap /= 10
+
+;---- volume based, fast but with large memory ------
+; aifss = interpol(float(aifs),to,t, /spline);
+; pct_bsvd, inmap,aifss,dt,lambda,mpad,mask, $
+;         cbf=cbfmap,cbv=cbvmap,mtt=mttmap,delay=delaymap, k=k, $
+;         first=first,last=last
+
+
+;----- voxel based, slow with little memory
+; for iplane=153,157 do begin   ;0, nplane-1 do begin
+;     print, 'Processing Plane '+ nistring(iplane)+' uisng b-SVD...'
+;     for irow=0, nrow-1 do begin
+;         for icol=0, ncol-1 do begin
+;         tac = inmap[icol,irow,iplane,*]
+;         tac1 =  interpol(tac,t,ts, /spline);
+;         if total(tac) lt 1e-5 or tac[10] eq tac[20] then continue
+;     pct_bsvd, tac1,aif,dt,lambda,mpad,mask, $
+;                 cbf=cbfmap,cbv=cbvmap,mtt=mttmap,delay=delaymap, k=k, $
+;                 first=first,last=last
+; ; cbvmap = cbfmap * mttmap;
+;         cbfall1[icol,irow,iplane] = cbfmap
+;         mttall1[icol,irow,iplane] = mttmap/10
+;         cbvall1[icol,irow,iplane] = cbvmap
+;         delayall1[icol,irow,iplane] = delaymap
+;         ; print, cbfmap, mttmap/10., cbvmap, delaymap, ttp/10.
+;         endfor
+;     endfor
+; endfor
+
+; not sure why cbf 10 times larger, so is cbv, mtt seems to be fine, fixed
+stop
+
+
+
+line2:
+; ---------- calculate permeability map -----------
+
+; PCT Parameters
+rho = 1.05;   %Average brain tissue density
+PRE_bbbp = 20; %First frame in BBBP calculation
+POST_bbbp = 49; %Last frame in BBBP calculation
+POST_bbbp = min([POST_bbbp,frameNr]); %Last frame for BBBP cannot exceed the actual last frame
+dt = 1; % time interval between samples in seconds
+
+
+aifss = interpol(float(aifs),to,t, /spline);
+inmap  = tacall *0
+cbvmap = cbfall_ref*mttall_ref/60
+for iframe = 0, frameNr-1 do $
+     inmap[*,*,*,iframe] = tacall[*,*,*,iframe]-baselineall
+
+; inmap = inmap[*,*,*,153:157]
+pct_bbbp, inmap, cbvmap, aifss, dt, rho, PRE_bbbp, POST_bbbp, mask,   bbbmap, x, ymap, R 
+; BBBP    - A map of brain permeability in mL/100g/min [Y x X]
+; X       - The independent variable of the patlak plot [T x 1]
+; MAP    - A map of dependent variables of the patlak plot [T x Y x X]
+; R       - A map of coefficients of determination (R^2)
+
+
+;
+stop
 
 End

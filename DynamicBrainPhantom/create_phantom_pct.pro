@@ -24,6 +24,7 @@
 Pro create_phantom_pct
 
 dt       = 1    ; %s
+dtt      = 0.1
 addskull = 1
 ncol     = 256
 nrow     = 256 
@@ -115,7 +116,7 @@ nframe = (tstop-tstart)/dt+1
 t = indgen(nframe)*dt;     ;0:1:49
 to = indgen(25)*2 +1  ;1:2:49;
 aifs = [0, 0, 0, 0, 25, 105, 220, 350, 440, 485, 430, 300, 180, 110, 104, 108, 115, 125, 115, 108, 98, 90, 98, 108, 112];
-ts = indgen(tstop*10+1)*0.1   ;0:0.1:49;
+ts = indgen(tstop*10+1)*dtt   ;0:0.1:49;
 aif = interpol(float(aifs),to,ts, /spline);
 
 stop
@@ -200,7 +201,7 @@ for z=0,nplane-1 do begin
         delayslice[idx] = delay;
         ttp = where(tac eq max(tac));
         ; [~, ttp] = max(tac); 
-        ttpslice[idx] = ttp*0.1;
+        ttpslice[idx] = ttp;
     endfor
    endif
 

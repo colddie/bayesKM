@@ -1,0 +1,6 @@
+{
+	"folders": [],
+	"settings": {
+		"cquery.cacheDirectory": "${workspaceFolder}/.vscode/cquery_cached_index/"
+	}
+}

@@ -1,0 +1,4 @@
+merge libtpc used in memc/ with one in fit_pros/
+stepwise/continous motion fitting
+test interpolation for intergation in the simulation program
+peamelibility
