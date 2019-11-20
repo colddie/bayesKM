@@ -1,10 +1,10 @@
 
-test = 1
-debug = 1
+test = 0
+debug = 0
 
 if 1 then begin    ; 'dPET'
 
-  pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/fluropirdizeC1rebin0.5/'
+  pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_linear/linearlinearrebin1.00000/'
   ; restore,filename='img.sav'
   ; restore,filename='img_noise.sav'
   ; restore, filename= 'actimg_1comp_noise_turku.sav'
@@ -18,9 +18,10 @@ if 1 then begin    ; 'dPET'
   ; img = niread_nii('actimg_waysrtm.nii', orientation='RAS')
   ; img = niread_nii('actimg_wayC2.nii', orientation='RAS')
   ; img = niread_nii(pad+'actimg_fluropirdizeC1.nii', orientation='RAS')
-  img = niread_nii(pad+'actimg_fluropirdizeC1_0.00000_0.00500000_noise.nii', orientation='RAS')
+  ; img = niread_nii(pad+'actimg_fluropirdizeC1_0.00000_0.00500000_noise.nii', orientation='RAS')
   ; img = niread_nii('actimg_waysrtm.nii', orientation='RAS')
   ; img = niread_nii('actimg_wayC2_0_0.005_noise.nii', orientation='RAS')
+  img = niread_nii(pad+'actimg_linearlinear.nii', orientation='RAS')
   ; restore,filename='actimg_way.sav'
   ; img=tmpimg
   restore,filename='/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/mask.sav'
@@ -76,12 +77,21 @@ weight   = double(nsample) + 1.0
 weight = (plasma_t -shift(plasma_t,1)) / plasma_t[n_elements(plasma_t)-1] * nsample
 weight[0] = 0.
 ; weight = fltarr(nsample) + 1.
-model = 1L   ; 1,2,3
-tracer = 'fluropirdize'   ; 'way','fdg', 'fluropirdize', 'fdopa'
+model = 0L   ; 1,2,3
+tracer = 'linear'   ; 'way','fdg', 'fluropirdize', 'fdopa'
 mcmc = 0L;  rwmh, hmc
 useprior = 0L
 
 case model of 
+
+  0: begin
+    if tracer eq 'linear' then begin
+      initialK = [0.01, 0.5]
+      lb = [0., 0.]
+      ub = [1.,1.] 
+    endif
+  end
+
   1: begin     ;K1,k2
     if tracer eq 'fluropirdize' then begin  
       initialK = [0.01, 10.9]            
@@ -157,11 +167,11 @@ lb = double(lb)
 ub = double(ub)
 rwmh_par_scale = double(0.02)    ; was 0.06 for 1tpc 
 hmc_step_size  = double(0.001)
-rwmh_n_burnin  = 10000L *2          ; ?
-rwmh_n_draws   = 10000L 
+rwmh_n_burnin  = 10000L *4          ; ?
+rwmh_n_draws   = 10000L *2
 output = fltarr(rwmh_n_draws, n_elements(initialK))
 prior = dblarr(n_elements(initialK))
-sens = double(1e0)
+sens = double(1e1)
 mcmc_tac = '/home/tsun/bin/mcmc-master/tests/example/librwmh_tac.so'
 
 ; 0.06 for 2tpc
@@ -205,6 +215,23 @@ for iplane = 0, nplane-1 do begin
         tissue_c = reform(img[icol,irow,iplane,*])            ;reform(img[79,126,1,*])
 
         case model of 
+
+          0: begin
+           if useprior then $
+              prior = [ phantomK1[icol,irow,iplane], phantomk2[icol,irow,iplane], 0.0, 0.0 ]
+              
+            success = call_external(mcmc_tac, 'rwmh_tac_2tpc', long(nsample), double(tissue_c), double(plasma_t), double(plasma_c), $   ; was rwmh_tac_1tpc
+                            double(weight), double(prior), output, $
+                            double(initialK), double(lb), double(ub), $
+                            rwmh_par_scale,hmc_step_size,rwmh_n_burnin,rwmh_n_draws, model,debug, mcmc,useprior,sens) 
+
+            print, mean(output(*,0)),stddev(output(*,0)),mean(output(*,1)),stddev(output(*,1))
+           
+            meanimg[icol,irow,iplane,0] = mean(output(*,0))
+            meanimg[icol,irow,iplane,1] = mean(output(*,1))
+            varimg[icol,irow,iplane,0]  = stddev(output(*,0))
+            varimg[icol,irow,iplane,1]  = stddev(output(*,1))
+          end
           1: begin ;1 tissue compartment model
             if useprior then $
               prior = [ phantomK1[icol,irow,iplane], phantomk2[icol,irow,iplane], 0.0, 0.0 ]

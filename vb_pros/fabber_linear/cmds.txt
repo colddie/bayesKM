@@ -1,0 +1,4 @@
+./fabber_linear1 --plasma_t=linearlinearrebin1.00000/plasma_t.txt
+ --nsample=158 --pmean1=0.2 --pmean2=0.12 --pprecision1=1e2 --pprecision2=1e1 
+--data=linearlinearrebin1.00000/actimg_linearlinear_fabber.nii --model=lineartest 
+--method=vb --noise=white --output=test --allow-bad-voxels

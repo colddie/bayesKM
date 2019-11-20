@@ -18,4 +18,6 @@ cd /home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1
 make clean
 cp /home/tsun/bin/fsl/install/src/fabber_core/fabber_main.o /home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1
 make all -j4
+cp /home/tsun/bin/fsl/install/src/fabber_core/fabber_main.o /home/tsun/bin/fsl/install/src/fabber_core/fabber_linear
+make all -j4
 }

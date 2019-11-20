@@ -5,19 +5,49 @@
 ; aif = interp1(to,aifs,ts,'spline');
 
 
-pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/'
+pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_linear/'
 fromphantom = 1
 modeldef = 'fdg_3comp_basic'
-tracer = 'fdg'    ; way, recropide, fdg, fdopa, fluropirdize
+tracer = 'linear'    ; linear, way, recropide, fdg, fdopa, fluropirdize
 isotope = 'F-18'     ;'C-11'   ; 'F-18'
 compartment = 'C2'    ; 'C1', 'C2', 'srtm', 'rtcm'
 bound = 0.05*0             ; high the high variance in Ks
 tacnoiselevel = 0.005     ; higher the high noise
 nframe =  158   ; by default, deprecated
-rebin_fac = 4.0; 0.5
+rebin_fac = 1.0; 0.5
 fwhm = 5.0
 
 case tracer of 
+    'linear' : begin
+      img=readraw('/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/fdg_1.bin',256,256,190,'float')
+      size    = size(img)
+      ncol    = size[1]
+      nrow    = size[2]
+      nplane  = size[3]
+      phantom = img
+      phantom[where(img gt 0. and img lt 50.)]=1.
+      phantom[where(img ge 50. and img lt 100.)]=2.
+      phantom[where(img ge 100. and img lt 150.)]=3.
+      phantom[where(img ge 150. and img lt 250.)]=4.
+      phantomK1 = phantom * 0
+      phantomk2 = phantom * 0
+      phantomk3 = phantom * 0
+      phantomk4 = phantom * 0
+      phantomm = phantom * 0
+
+      ; According to 
+      phantomK1 = phantom / (max(phantom)/0.12)
+      phantomk2 = phantom / (max(phantom)/0.2)
+
+      ; genereate dynamic frames
+
+      ; Ask which model to be used.
+      ;------------------
+      ; tracer = 'F-18'
+      addnoise = 0    ; simple noise
+     compartment = 'linear'
+    end
+
   'fluropirdize' : begin
     ; img=readraw('/storage0/home/tsun/code/idl/mgh/fabber_pet/fdg_0_1.bin',256,256,190,'float')
     img=readraw('/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/fdg_1.bin',256,256,190,'float')
@@ -411,6 +441,8 @@ for iplane = 82, 83 do begin;nplane-1 do begin
           dummy = call_external('libtpccm.so', 'simRTCM_idl', double(plasma_t), double(plasma_c), fix(n_elements(plasma_t)), $
                               double(parms[0]),double(parms[1]),double(parms[2]),double(parms[3]), tissue_cc,return_type=2,/verbose)
 
+        if compartment eq 'linear' then $
+          tissue_cc = parms[0]*plasma_t+parms[1]
         ;  addnoise = 1
         ; if addnoise then begin
         ;   rand = randomn(SEED,n_elements(plasma_t))
@@ -440,7 +472,7 @@ help,niwrite_nii(tmpimg, padname +'.nii')
 
 
 ; write the plasma_t.txt and plasma_c.txt
-if compartment eq 'C1' or compartment eq 'C2' then begin
+if compartment eq 'C1' or compartment eq 'C2' or compartment eq 'linear' then begin
   fname= tosave+'/'+'plasma_t.txt'
   OPENW,1,fname 
   PRINTF,1,plasma_t

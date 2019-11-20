@@ -1,26 +1,18 @@
 /*  inference_vb.cc - Variational Bayes with optional spatial smoothing
-
  Adrian Groves and Matthew Webster, FMRIB Image Analysis Group
-
  Copyright (C) 2007-2010 University of Oxford  */
 
 /*  Part of FSL - FMRIB's Software Library
     http://www.fmrib.ox.ac.uk/fsl
     fsl@fmrib.ox.ac.uk
-
     Developed at FMRIB (Oxford Centre for Functional Magnetic Resonance
     Imaging of the Brain), Department of Clinical Neurology, Oxford
     University, Oxford, UK
-
-
     LICENCE
-
     FMRIB Software Library, Release 6.0 (c) 2018, The University of
     Oxford (the "Software")
-
     The Software remains the property of the Oxford University Innovation
     ("the University").
-
     The Software is distributed "AS IS" under this Licence solely for
     non-commercial use in the hope that it will be useful, but in order
     that the University as a charitable foundation protects its assets for
@@ -32,13 +24,11 @@
     all responsibility for the use which is made of the Software. It
     further disclaims any liability for the outcomes arising from using
     the Software.
-
     The Licensee agrees to indemnify the University and hold the
     University harmless from and against any and all claims, damages and
     liabilities asserted by third parties (including claims for
     negligence) which arise directly or indirectly from the use of the
     Software or the sale of any products based on the Software.
-
     No part of the Software may be reproduced, modified, transmitted or
     transferred in any form or by any means, electronic or mechanical,
     without the express permission of the University. The permission of
@@ -49,7 +39,6 @@
     transmitted product. You may be held legally responsible for any
     copyright infringement that is caused or encouraged by your failure to
     abide by these terms and conditions.
-
     You are not permitted under this Licence to use this Software
     commercially. Use for which any financial return is received shall be
     defined as commercial use, and includes (1) integration of all or part
@@ -210,9 +199,12 @@ void Vb::SetupPerVoxelDists(FabberRunData &rundata)
     m_ctx->noise_prior.resize(m_nvoxels, NULL);
     m_ctx->fwd_post.resize(m_nvoxels);
 
+	   int v = 100;
+										
     // Re-centred in voxel loop below
     m_lin_model.resize(m_nvoxels, LinearizedFwdModel(m_model));
 
+	
     // Initialized in voxel loop below
     m_conv.resize(m_nvoxels, NULL);
     string conv_name = rundata.GetStringDefault("convergence", "maxits");
@@ -285,6 +277,13 @@ void Vb::SetupPerVoxelDists(FabberRunData &rundata)
             m_ctx->noise_post[v - 1] = initialNoisePosterior->Clone();
         }
 
+								                    if (v == 100)
+										{
+											    LOG << "Centre1: " << endl << m_lin_model[v - 1].Centre();
+    LOG << "Offset1: " << endl << m_lin_model[v - 1].Offset();
+    LOG << "Jacobian1: " << endl << m_lin_model[v - 1].Jacobian() << endl;
+										}
+					
         if (m_locked_linear)
         {
             lockedLinearCentres.Column(v)
@@ -295,7 +294,9 @@ void Vb::SetupPerVoxelDists(FabberRunData &rundata)
         {
             m_lin_model[v - 1].ReCentre(m_ctx->fwd_post[v - 1].means);
         }
-
+					
+					
+					
         // Create per-voxel convergence detector. Initialization of m_needF is
         // inefficient but not harmful because all convergence detectors are the same type
         m_conv[v - 1] = ConvergenceDetector::NewFromName(conv_name);
@@ -597,7 +598,7 @@ void Vb::DoCalculationsVoxelwise(FabberRunData &rundata)
         {
             m_lin_model[v - 1].ReCentre(m_ctx->fwd_post[v - 1].means);
             m_conv[v - 1]->Reset();
-
+					
             // START the VB updates and run through the relevant iterations (according to the
             // convergence testing)
             do
@@ -606,6 +607,9 @@ void Vb::DoCalculationsVoxelwise(FabberRunData &rundata)
 
                 if (m_conv[v - 1]->NeedRevert()) // revert to previous solution if the convergence
                                                  // detector calls for it
+
+					
+					
                 {
                     *m_ctx->noise_post[v - 1] = *noisePosteriorSave;
                     m_ctx->fwd_post[v - 1] = fwdPosteriorSave;
