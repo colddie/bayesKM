@@ -27,11 +27,13 @@ namespace sitk = itk::simple;
 struct ll_data
 {
 	int verbose;
-	int parNr = 6;
+	int parNr;    // = 6;
 	int nframe;
+	int slowmotion;
 	int fitmodel;
 	int fitmethod;
 	int *index;
+	int *Findex;
 	float *rigmotion;
 	float tstart;
 	float tstop;
@@ -55,9 +57,10 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	const char *debugfile  = "debug.txt";
 	ll_data* objfn_data = reinterpret_cast<ll_data*>(opt_data);
 	int verbose = objfn_data->verbose;
+	int slowmotion = objfn_data->slowmotion;
 	int nframe = objfn_data->nframe;
-	int parNr  = objfn_data->parNr;
-	int pparNr = parNr/6;
+	// int parNr  = objfn_data->parNr;
+	int pparNr = objfn_data->parNr/6;
 	int *index = objfn_data->index; 
 	int *Findex = objfn_data->Findex;
 	float *rigmotion = objfn_data->rigmotion;
@@ -65,60 +68,52 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	std::vector<unsigned int> dims = imgs.GetSize();
 	sitk::Image imgs1 = sitk::Image( dims , sitk::sitkFloat32);
 
+	std::vector<float> rigmotions(nframe*6);    //nframe*6
+    if (slowmotion) {
+		// b-spline interpoolate rigmotion
+		std::vector<float> rigmotions1(nframe); 
+		std::vector<float> rigmotions2(nframe); 
+		std::vector<float> rigmotions3(nframe); 
+		std::vector<float> rigmotions4(nframe); 
+		std::vector<float> rigmotions5(nframe); 
+		std::vector<float> rigmotions6(nframe); 
 
-if (0) {
-   // b-spline interpoolate rigmotion
-	rigmotions1 = (float *) malloc(parNr*sizeof(float));
-	rigmotions2 = (float *) malloc(parNr*sizeof(float));
-	rigmotions3 = (float *) malloc(parNr*sizeof(float));
-	rigmotions4 = (float *) malloc(parNr*sizeof(float));
-	rigmotions5 = (float *) malloc(parNr*sizeof(float));
-	rigmotions6 = (float *) malloc(parNr*sizeof(float));  
+		for(int iframe=0;iframe<nframe;iframe++ ) { 
+			int tmpIndex = index[iframe] - 1;
+			rigmotions1[iframe] = vals[tmpIndex*6];
+			rigmotions2[iframe] = vals[tmpIndex*6+1];
+			rigmotions3[iframe] = vals[tmpIndex*6+2];
+			rigmotions4[iframe] = vals[tmpIndex*6+3];
+			rigmotions5[iframe] = vals[tmpIndex*6+4];
+			rigmotions6[iframe] = vals[tmpIndex*6+5];
+		}
 
-	for(int iframe=0;iframe<objfn_data->nframe;iframe++ ) { 
-		int tmpIndex = index[iframe] - 1;
-		rigmotions1[iframe] = vals[tmpIndex*6];
-		rigmotions2[iframe] = vals[tmpIndex*6+1];
-		rigmotions3[iframe] = vals[tmpIndex*6+2];
-		rigmotions4[iframe] = vals[tmpIndex*6+3];
-		rigmotions5[iframe] = vals[tmpIndex*6+4];
-		rigmotions6[iframe] = vals[tmpIndex*6+5];
+		// interpoalte for each individual frame
+		std::vector<double> X(pparNr),Y1(pparNr),Y2(pparNr),Y3(pparNr),Y4(pparNr),Y5(pparNr),Y6(pparNr);
+		for (int ipar;ipar<pparNr;ipar++  ) {
+			int tmpIndex2 = Findex[ipar] - 1;
+			X[ipar] = objfn_data->plasma_t[tmpIndex2]; 
+			Y1[ipar] = rigmotions1[tmpIndex2]; 
+			Y2[ipar] = rigmotions2[tmpIndex2]; 
+			Y3[ipar] = rigmotions3[tmpIndex2]; 
+			Y4[ipar] = rigmotions4[tmpIndex2]; 
+			Y5[ipar] = rigmotions5[tmpIndex2]; 
+			Y6[ipar] = rigmotions6[tmpIndex2]; 
+		}
+
+		tk::spline s1; s1.set_points(X,Y1); tk::spline s2; s2.set_points(X,Y2);
+		tk::spline s3; s3.set_points(X,Y3); tk::spline s4; s4.set_points(X,Y4);
+		tk::spline s5; s5.set_points(X,Y5); tk::spline s6; s6.set_points(X,Y6);
+
+		for (int iframe=0;iframe<nframe;iframe++) {
+			rigmotions[iframe*6]   = s1(objfn_data->plasma_t[iframe]);
+			rigmotions[iframe*6+1] = s2(objfn_data->plasma_t[iframe]);
+			rigmotions[iframe*6+2] = s3(objfn_data->plasma_t[iframe]);
+			rigmotions[iframe*6+3] = s4(objfn_data->plasma_t[iframe]);
+			rigmotions[iframe*6+4] = s5(objfn_data->plasma_t[iframe]);
+			rigmotions[iframe*6+5] = s6(objfn_data->plasma_t[iframe]);
+		}
 	}
-
-	// X=plasma_t;
-	// Y1= rigmtoions1;
-
-std::vector<double> X(pparNr),Y1(pparNr),Y2(pparNr),Y3(pparNr),Y4(pparNr),Y5(pparNr),Y6(pparNr);
-for (int ipar;ipar<pparNr;ipar++  ) {
-	X[ipar] = plasma_t[Findex[ipar]]; Y1[ipar] = rigmotions1[Findex[ipar]];
-	Y2[ipar] = rigmotions2[Findex[ipar]];
-	Y3[ipar] = rigmotions3[Findex[ipar]];
-	Y4[ipar] = rigmotions4[Findex[ipar]];
-	Y5[ipar] = rigmotions5[Findex[ipar]];
-	Y6[ipar] = rigmotions6[Findex[ipar]];
-}
-
-tk::spline s1; s1.set_points(X,Y1); tk::spline s2; s2.set_points(X,Y2);
-tk::spline s3; s3.set_points(X,Y3); tk::spline s4; s4.set_points(X,Y4);
-tk::spline s5; s5.set_points(X,Y5); tk::spline s6; s6.set_points(X,Y6);
-
-for (int iframe=0;iframe<nframe-1;iframe++) {
-   rigmotions[iframe] = s1[plasma_t[iframe]];
-
-
-}
-
-//    std::vector<double> X(5), Y(5);
-//    X[0]=0.1; X[1]=0.4; X[2]=1.2; X[3]=1.8; X[4]=2.0;
-//    Y[0]=0.1; Y[1]=0.7; Y[2]=0.6; Y[3]=1.1; Y[4]=0.9;
-
-//    tk::spline s;
-//    s.set_points(X,Y);    // currently it is required that X is already sorted
-
-//    printf("spline at %f is %f\n", x, s(x));
-
-//    return EXIT_SUCCESS;
-}
 
     // sitk::Image resampled_vectorout(dims,sitk::sitkVectorFloat32,objfn_data->nframe);
 	std::vector<sitk::Image> resampled_vectorout;
@@ -139,18 +134,32 @@ for (int iframe=0;iframe<nframe-1;iframe++) {
 	     	continue;
 		}
 
-		int tmpIndex = index[iframe] - 1;
+        // get motion for each frame
+		double theta_x;
+		double theta_y;
+		double theta_z;
+		std::vector<double> translation(3);
 		std::vector<double> rotation_center(3);
 		rotation_center[0] = dims[0]/double(2);
 		rotation_center[1] = dims[1]/double(2);
 		rotation_center[2] = dims[2]/double(2);
-		double theta_x = vals[tmpIndex*6];
-		double theta_y = vals[tmpIndex*6+1];
-		double theta_z = vals[tmpIndex*6+2];
-		std::vector<double> translation(3);
-		translation[0] = vals[tmpIndex*6+3];
-		translation[1] = vals[tmpIndex*6+4];
-		translation[2] = vals[tmpIndex*6+5];
+		if (slowmotion) {
+			theta_x = rigmotions[iframe*6];
+			theta_y = rigmotions[iframe*6+1];
+			theta_z = rigmotions[iframe*6+2];
+			translation[0] = rigmotions[iframe*6+3];
+			translation[1] = rigmotions[iframe*6+4];
+			translation[2] = rigmotions[iframe*6+5];
+			// print rigmotions[]
+		} else {
+			int tmpIndex = index[iframe] - 1;
+			theta_x = vals[tmpIndex*6];
+			theta_y = vals[tmpIndex*6+1];
+			theta_z = vals[tmpIndex*6+2];
+			translation[0] = vals[tmpIndex*6+3];
+			translation[1] = vals[tmpIndex*6+4];
+			translation[2] = vals[tmpIndex*6+5];
+		}
 
 		// sitk::AffineTransform euler_transform(3);
 		// euler_transform.SetCenter(rotation_center);  
@@ -167,7 +176,7 @@ for (int iframe=0;iframe<nframe-1;iframe++) {
 
     if (verbose == 1 ) {
 		FILE *pfile = fopen(debugfile, "a+");
-		fprintf(pfile, "index: %d %d, \n", iframe, tmpIndex);
+		fprintf(pfile, "index: %d , \n", iframe);
 		fprintf(pfile, "offset: %f, %f %f \n",  rotation_center[0], rotation_center[1], rotation_center[2]);
 		fprintf(pfile, "theta: %f, %f %f \n",  theta_x, theta_y, theta_z);
 		fprintf(pfile, "translation: %f, %f %f \n",  translation[0], translation[1], translation[2]);
@@ -213,7 +222,7 @@ for (int iframe=0;iframe<nframe-1;iframe++) {
     std::vector<unsigned int> dim = { dims[0],dims[1],dims[2] };
 	sitk::Image Kiimg = sitk::Image( dim, sitk::sitkFloat32); 
 	double var = 0.0;
-	double output[5];
+	double output[5];                      output[0]=0; output[1]=0; output[2]=0; output[3]=0; output[4]=0;    
 	double *weights = (double *)malloc(nframe*sizeof(double));
 	// double *plasma_t = reinterpret_cast<double*>(objfn_data->plasma_t);
 	// double *plasma_tt = reinterpret_cast<double*>(objfn_data->plasma_tt);
@@ -236,7 +245,7 @@ for (int iframe=0;iframe<nframe-1;iframe++) {
 			tac[iframe]=(double)imgs1.GetPixelAsFloat(tacIndex); 
 			tacsum +=tac[iframe];
 		}
-        if (tacsum < 0.1) { continue ;}      // skip the background
+        if (tacsum < 0.1) { 	    free(tac);	continue ;}      // skip the background, do not forget free memory
 
 		int success = patlak_c(nframe, objfn_data->plasma_tt, objfn_data->plasma_t, tac, 
 						objfn_data->plasma_c,(double)objfn_data->tstart,(double)objfn_data->tstop,output,0,0,0,weights);    //debug,llsq_model,isweight
@@ -268,8 +277,12 @@ for (int iframe=0;iframe<nframe-1;iframe++) {
 	}
     free(weights);	
 	// FILE *pfile = fopen(debugfile, "a+");
-	printf("total variance: %f current estimate %f %f %f %f %f %f \n", var,
-	                vals[0],vals[1],vals[2],vals[3],vals[4],vals[5]);
+	// printf("total variance: %f current estimate %f %f %f %f %f %f \n", var,
+	//                 vals[0],vals[1],vals[2],vals[3],vals[4],vals[5]);
+	printf("total variance: %f  ",var);
+	printf("current estimate ");
+	for(int i=0;i<objfn_data->parNr;i++) { printf("%f ", vals[i]); }
+	printf("\n");
 	return var;
 }
 
@@ -277,10 +290,12 @@ for (int iframe=0;iframe<nframe-1;iframe++) {
 
 extern "C" double Func (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
 {
-	int parNr = 6;
-	double vals[6];
-	for (int ipar=0;ipar<parNr;ipar++)  { vals[ipar] = vals_inp[ipar]; }
-	double var = Func0(parNr, vals, opt_data);
+
+	// int parNr = 6;
+	ll_data* objfn_data = reinterpret_cast<ll_data*>(opt_data);
+	double vals[objfn_data->parNr];
+	for (int ipar=0;ipar<objfn_data->parNr;ipar++)  { vals[ipar] = vals_inp[ipar]; }
+	double var = Func0(objfn_data->parNr, vals, objfn_data);
 
 	return var;
 }
@@ -301,7 +316,7 @@ extern "C"  int meKineticRigid(int argc, float* argv[])     //meKineticRigid
     // float *rigotion;
 
     /* debug */
-    if (argc > 13 || argc <= 1) {
+    if (argc > 16 || argc <= 1) {
       FILE *pfile = fopen(debugfile, "a+");
 	  fprintf(pfile, "meKineticRigid: 18 arguments required, %d supplied\n", argc);
 	  fclose(pfile);
@@ -311,20 +326,22 @@ extern "C"  int meKineticRigid(int argc, float* argv[])     //meKineticRigid
 	// Read the image
 	//	
 	ll_data opt_data;
-    opt_data.nframe      =  *(size_t *)  argv[0];
-	imgfilename          =  std::string((*(idls *) argv[1]).s);
-	parms0               =  (float *)  argv[2];		
-	opt_data.tstart      =  *(float *) argv[3];
-	opt_data.tstop       =  *(float *) argv[4];
-	opt_data.plasma_tt   =  (double *)  argv[5];
-	opt_data.plasma_t    =  (double *)  argv[6];
-	opt_data.plasma_c    =  (double*)   argv[7];
-	opt_data.fitmodel    =  *(int *)   argv[8];
-	opt_data.fitmethod   =  *(int *)   argv[9];
-	opt_data.rigmotion   =  (float *)  argv[10];
-	opt_data.index       =  (int *)   argv[11];
-	opt_data.Findex      =  (int *)   argv[12];
-	opt_data.verbose     =  *(int *)   argv[13];
+	opt_data.parNr        =  *(size_t *)  argv[0];
+    opt_data.nframe      =  *(size_t *)  argv[1];
+	imgfilename          =  std::string((*(idls *) argv[2]).s);
+	parms0               =  (float *)  argv[3];		
+	opt_data.tstart      =  *(float *) argv[4];
+	opt_data.tstop       =  *(float *) argv[5];
+	opt_data.plasma_tt   =  (double *)  argv[6];
+	opt_data.plasma_t    =  (double *)  argv[7];
+	opt_data.plasma_c    =  (double*)   argv[8];
+	opt_data.fitmodel    =  *(int *)   argv[9];
+	opt_data.fitmethod   =  *(int *)   argv[10];
+	opt_data.rigmotion   =  (float *)  argv[11];
+	opt_data.index       =  (int *)   argv[12];
+	opt_data.Findex      =  (int *)   argv[13];
+	opt_data.verbose     =  *(int *)   argv[14];
+	opt_data.verbose     =  *(int *)   argv[15];
 
 	sitk::ImageFileReader reader;
 	reader.SetFileName( imgfilename );
@@ -355,6 +372,7 @@ if (opt_data.fitmethod == 1) {
 	lower_bounds[3] = -8.0;	upper_bounds[3] =  8.0;	
 	lower_bounds[4] = -8.0;	upper_bounds[4] =  8.0;	
 	lower_bounds[5] = 0.0;	upper_bounds[5] =  0.0;		
+	// lower_bounds[6]
 
 	settings.vals_bound = true;
     settings.lower_bounds = lower_bounds;
@@ -374,26 +392,31 @@ if (opt_data.fitmethod == 1) {
 
 if (opt_data.fitmethod==2) {
 
-    int tgoNr,iterNr,neighNr,parNr;
-    double pmin[6], pmax[6];
+    int tgoNr,iterNr,neighNr;   //,parNr;
+    double pmin[opt_data.parNr], pmax[opt_data.parNr];
     bool TGO_LOCAL_INSIDE=0;
     bool TGO_SQUARED_TRANSF=1;
     tgoNr=30; iterNr=10; neighNr=5;
-    parNr=6;
-	pmin[0] = 0.0;	pmax[0] =  0.0;
-	pmin[1] = 0.0;	pmax[1] =  0.0;
-	pmin[2] = -0.3;	pmax[2] =  0.3;
-	pmin[3] = -8.0;	pmax[3] =  8.0;	
-	pmin[4] = -8.0;	pmax[4] =  8.0;
-	pmin[5] = 0.0; pmax[5] =  0.0;
+	for (int i=0;i<opt_data.parNr;i++) { 
+		if (i%6==0 || i%6==1 || i%6==5) { pmin[i] = 0.0;	pmax[i] =  0.0; } 
+		if (i%6==3 || i%6==4)           { pmin[i] = -10.0;	pmax[i] =  10.0; } 
+		if (i%6==2)                     { pmin[i] = -0.3;	pmax[i] =  0.3; } 			
+	}
+    // parNr=6;
+	// pmin[0] = 0.0;	pmax[0] =  0.0;
+	// pmin[1] = 0.0;	pmax[1] =  0.0;
+	// pmin[2] = -0.3;	pmax[2] =  0.3;
+	// pmin[3] = -8.0;	pmax[3] =  8.0;	
+	// pmin[4] = -8.0;	pmax[4] =  8.0;
+	// pmin[5] = 0.0; pmax[5] =  0.0;
+	//pmin[6]
 
     double wss=0;
-    double *output = (double *)malloc(parNr*sizeof(double));   // not needed!
-    // double output[2];
+    // double *output = (double *)malloc(opt_data.parNr*sizeof(double));   // not needed!
+    double output[opt_data.parNr];
 
-    // bool success_0 = 1;
     bool success_0 = tgo(
-      pmin, pmax, Func0, &opt_data, parNr, neighNr,
+      pmin, pmax, Func0, &opt_data, opt_data.parNr, neighNr,
       &wss, output, tgoNr, iterNr, 10);  // opt_data.verbose);
 
     if (!success_0) {
@@ -402,11 +425,12 @@ if (opt_data.fitmethod==2) {
         std::cout << "powell: Booth test completed unsuccessfully." << std::endl;
     }
     
-    std::cout << "powell: solution to Booth test: \n"  << output[0] <<" " << output[1] << " "<<
-	    output[2] << " "<< output[3] << " " << output[4] << " "<<output[5]<< "\n" << std::endl;
-	free(output);
+    // std::cout << "powell: solution to Booth test: \n"  << output[0] <<" " << output[1] << " "<<
+	//     output[2] << " "<< output[3] << " " << output[4] << " "<<output[5]<< "\n" << std::endl;
+	std::cout << "powell: solution to Booth test: \n"<< std::endl;
+	for (int i=0;i<opt_data.parNr;i++) { std::cout <<output[i]<<" "<< std::endl; } 
+	// free(output);
 }
-
 
     return 1;
 }

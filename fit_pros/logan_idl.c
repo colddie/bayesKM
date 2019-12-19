@@ -277,6 +277,8 @@ int logan_idl(int argc,  float * argv[])         //Pure c does not require exter
                       data.voi[ri].y2, NULL);
     else
       ret=integrate(data.x, data.voi[ri].y, data.frameNr, data.voi[ri].y2);
+
+    
     if(ret) {
       printf( "Error in integration of tissue data. %d \n", ret);
       dftEmpty(&data); dftEmpty(&input); return(2);
@@ -286,6 +288,7 @@ int logan_idl(int argc,  float * argv[])         //Pure c does not require exter
 if (verbose>1) {
     printf("\nTissue data:\n");
     dftPrint(&data);
+    printf("data.timetype %d DFT_TIME_STARTEND %d", data.timetype, DFT_TIME_STARTEND);
 }
   
 
