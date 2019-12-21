@@ -207,7 +207,7 @@ case motionchoice of
   1 : begin
   ; ----------------------
   ; Call external optimization program 
-  debug = 1L
+  debug = 0L
   tstart = float(tstart)
   tstop = float(tstop)
   nframe = (size(imgs1))[4]
@@ -231,7 +231,7 @@ case motionchoice of
   fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
   success = call_external(lib, 'meKineticRigid', npar, nframe, imgfilename, parms0, tstart, tstop, $
                           double(plasma_tt),double(plasma_t), double(plasma_c), model, fitmethod,rigmotion, $
-                          fitIndex, frameIndex, debug, 0)
+                          fitIndex, frameIndex, debug, 0L)
   end
 
 
@@ -265,8 +265,8 @@ case motionchoice of
   ; fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
   frameIndex = [imovframe1,imovframe2,imovframe3]
   success = call_external(lib, 'meKineticRigid', npar, nframe, imgfilename, parms0, tstart, tstop, $
-                          double(plasma_tt),double(plasma_t), double(plasma_c), model, fitmethod,rigmotion, $
-                          fitIndex, frameIndex, debug, 0)
+                          double(plasma_tt),double(plasma_t),double(plasma_c),model,fitmethod,rigmotion, $
+                          fitIndex, frameIndex, debug, 1L)
   end
 
 
@@ -297,15 +297,15 @@ case motionchoice of
   for ipar=0,npar-2 do $
     fitIndex[frameIndex[ipar]:frameIndex[ipar+1]] = ipar
   
-; stop
+stop
   ; fitIndex[imovframe1:imovframe2-1] = 1
   ; fitIndex[imovframe2:imovframe3-1] = 2
   ; fitIndex[imovframe3:nframe-1]     = 3
   ; fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
   
   success = call_external(lib, 'meKineticRigid', nparpar, nframe, imgfilename, parms0, tstart, tstop, $
-                          double(plasma_tt),double(plasma_t), double(plasma_c), model, fitmethod,rigmotion, $
-                          fitIndex, frameIndex, debug, 1)    ; estiamte slow motion
+                          double(plasma_tt),double(plasma_t),double(plasma_c),model,fitmethod,rigmotion, $
+                          fitIndex, frameIndex, debug, 1L)    ; estiamte slow motion
 
   end
 

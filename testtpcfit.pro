@@ -25,9 +25,9 @@
 ;   " -density=<value>",
 ;   "     Tissue density in MR calculation; default is 1.0 g/ml.",
 
+  time0 = systime(1)
   useref = 0;   use reference region as input?
   testmode = 'pCT';   '1TCM','2TCM','patlak','logan','fur','mrtm','sim_patlak','sim_logan','SRTM','2TCMrev','MBF', 'pCT'
-
 
 case testmode of
     'patlak': begin
@@ -476,7 +476,7 @@ case testmode of
     isweight = 1
     ; weights = fltarr(frameNr) + 1.0
     weights = (t1-t0)/total(t1-t0)
-	t = (t0+t1)/2
+	  t = (t0+t1)/2
     ; directbp = 1
     def_pmin = [0.0,0.00001,0.0]
     def_pmax = [5.0,10.0,1.0]  
@@ -510,7 +510,7 @@ case testmode of
     t = indgen(frameNr)*dt;     ;0:1:49
     to = indgen(25)*2 +1  ;1:2:49;
     aifs = [0, 0, 0, 0, 25, 105, 220, 350, 440, 485, 430, 300, 180, 110, 104, 108, 115, 125, 115, 108, 98, 90, 98, 108, 112];
-    ts = indgen(tstop*10+1)*0.1   ;0:0.1:49;
+    ts = indgen(tstop*2+1)*0.5   ;0:0.1:49;
     aif = interpol(float(aifs),to,ts, /spline);
     
     cbf = 20         ; too small mtt svd make underestimated cbf
@@ -526,7 +526,7 @@ case testmode of
     weights = fltarr(n_elements(ts))+1.0
     def_pmin = [0.0,0.0,0.0]     ; cbf, mtt; cbv and ttp are calculated 
     def_pmax = [100.0,50.0,20.0]  
-    doSD = 0
+    doSD = 1
     doCL = 0
     bootstrapIter = 200  ; has to be larger than 100!
     matrix = double(fltarr(bootstrapIter*n_elements(def_pmin))) ; change with num_param
@@ -546,33 +546,28 @@ case testmode of
     print, output,' ', cbv,' ', ttp/10.
 
 
-    stop
+    ; stop
 
     ; Apply conventional block-circulant SVD approach
-    lambda = 0.2   ; truncation
-    mpad   = 2
-    mask   = 0
-    dt    /= 1.    ; /=10.
-    first  = 0
-    last   = 200     ; depends ont mtt
-    ; tac = congrid(tac,10)
-    ; aif = congrid(aif,10)
-    pct_bsvd, tac, aif, dt, lambda, mpad, mask, $
-                cbf=cbfmap, cbv=cbvmap, mtt=mttmap,delay=delaymap,k=k,$
-                first=first,last=last
+    if 0 then begin
+      lambda = 0.2   ; truncation
+      mpad   = 2
+      mask   = 0
+      dt    /= 1.    ; /=10.
+      first  = 0
+      last   = 200     ; depends ont mtt
+      ; tac = congrid(tac,10)
+      ; aif = congrid(aif,10)
+      pct_bsvd, tac, aif, dt, lambda, mpad, mask, $
+                  cbf=cbfmap, cbv=cbvmap, mtt=mttmap,delay=delaymap,k=k,$
+                  first=first,last=last
 
-    print, cbfmap, mttmap/10., cbvmap, delaymap, ttp/10.
+      print, cbfmap, mttmap/10., cbvmap, delaymap, ttp/10.
 
-  stop 
-
-
-
-
+      stop 
+    endif
 
   end
-
-
-
 
 
 
@@ -663,8 +658,7 @@ endcase
 
 
 
-
-
+  print, 'elapsed time ' + nistring(systime(1)-time0) + ' seconds...'
 
 
 stop

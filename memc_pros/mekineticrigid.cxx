@@ -124,7 +124,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 
 		if (index[iframe] == 0) {
 			extractSize = imgs.GetSize();
-			extractSize[3] = 0;
+			extractSize[3]  = 0;
 			extractIndex[0] = 0;
 			extractIndex[1] = 0;
 			extractIndex[2] = 0;
@@ -144,18 +144,18 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 		rotation_center[1] = dims[1]/double(2);
 		rotation_center[2] = dims[2]/double(2);
 		if (slowmotion) {
-			theta_x = rigmotions[iframe*6];
-			theta_y = rigmotions[iframe*6+1];
-			theta_z = rigmotions[iframe*6+2];
+			theta_x        = rigmotions[iframe*6];
+			theta_y        = rigmotions[iframe*6+1];
+			theta_z        = rigmotions[iframe*6+2];
 			translation[0] = rigmotions[iframe*6+3];
 			translation[1] = rigmotions[iframe*6+4];
 			translation[2] = rigmotions[iframe*6+5];
 			// print rigmotions[]
 		} else {
-			int tmpIndex = index[iframe] - 1;
-			theta_x = vals[tmpIndex*6];
-			theta_y = vals[tmpIndex*6+1];
-			theta_z = vals[tmpIndex*6+2];
+			int tmpIndex   = index[iframe] - 1;
+			theta_x        = vals[tmpIndex*6];
+			theta_y        = vals[tmpIndex*6+1];
+			theta_z        = vals[tmpIndex*6+2];
 			translation[0] = vals[tmpIndex*6+3];
 			translation[1] = vals[tmpIndex*6+4];
 			translation[2] = vals[tmpIndex*6+5];
@@ -184,7 +184,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	}
 
 		extractSize = imgs.GetSize();
-		extractSize[3] = 0;
+		extractSize[3]  = 0;
 		extractIndex[0] = 0;
 		extractIndex[1] = 0;
 		extractIndex[2] = 0;
@@ -222,7 +222,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
     std::vector<unsigned int> dim = { dims[0],dims[1],dims[2] };
 	sitk::Image Kiimg = sitk::Image( dim, sitk::sitkFloat32); 
 	double var = 0.0;
-	double output[5];                      output[0]=0; output[1]=0; output[2]=0; output[3]=0; output[4]=0;    
+	double output[5];  output[0]=0; output[1]=0; output[2]=0; output[3]=0; output[4]=0;    
 	double *weights = (double *)malloc(nframe*sizeof(double));
 	// double *plasma_t = reinterpret_cast<double*>(objfn_data->plasma_t);
 	// double *plasma_tt = reinterpret_cast<double*>(objfn_data->plasma_tt);
@@ -250,7 +250,8 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 		int success = patlak_c(nframe, objfn_data->plasma_tt, objfn_data->plasma_t, tac, 
 						objfn_data->plasma_c,(double)objfn_data->tstart,(double)objfn_data->tstop,output,0,0,0,weights);    //debug,llsq_model,isweight
 		var += abs(output[2]);   //+abs(output[3]);   // absolute
-
+        
+		if (success != 1) { printf("patlak fitting error! \n"); }
 		if (verbose==1) { 
 			// if (output[0] > 0.0) { printf("positive detected! \n"); }
 			              std::vector<unsigned int> vIndex(3);
@@ -275,14 +276,18 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 		writerK.SetFileName( std::string("Kiimg.nii") );
 		writerK.Execute(Kiimg);
 	}
-    free(weights);	
-	// FILE *pfile = fopen(debugfile, "a+");
-	// printf("total variance: %f current estimate %f %f %f %f %f %f \n", var,
-	//                 vals[0],vals[1],vals[2],vals[3],vals[4],vals[5]);
-	printf("total variance: %f  ",var);
-	printf("current estimate ");
-	for(int i=0;i<objfn_data->parNr;i++) { printf("%f ", vals[i]); }
-	printf("\n");
+
+	if (verbose == 1) {			
+		// FILE *pfile = fopen(debugfile, "a+");
+		// printf("total variance: %f current estimate %f %f %f %f %f %f \n", var,
+		//                 vals[0],vals[1],vals[2],vals[3],vals[4],vals[5]);
+		printf("total variance: %f  ",var);
+		printf("current estimate ");
+		for(int i=0;i<objfn_data->parNr;i++) { printf("%f ", vals[i]); }
+		printf("\n");
+	}
+
+	free(weights);	
 	return var;
 }
 
@@ -341,7 +346,7 @@ extern "C"  int meKineticRigid(int argc, float* argv[])     //meKineticRigid
 	opt_data.index       =  (int *)   argv[12];
 	opt_data.Findex      =  (int *)   argv[13];
 	opt_data.verbose     =  *(int *)   argv[14];
-	opt_data.verbose     =  *(int *)   argv[15];
+	opt_data.slowmotion  =  *(int *)   argv[15];
 
 	sitk::ImageFileReader reader;
 	reader.SetFileName( imgfilename );

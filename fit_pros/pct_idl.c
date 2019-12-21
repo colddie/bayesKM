@@ -310,9 +310,10 @@ dftPrint(&input); }
     // tgoNr=50+25*fittedparNr;
     // neighNr=6*fittedparNr;
     iterNr=0;
+    neighNr = 500;    // used to be 100
     ret=tgo(
       pmin, pmax, pctFunc, NULL, parNr, 8,
-      &wss, res.voi[ri].parameter, 100, 0, verbose-8);
+      &wss, res.voi[ri].parameter, neighNr, iterNr, verbose-8);
     if(ret>0) {
       printf( "\nError in optimization (%d).\n", ret);
       dftEmpty(&input); dftEmpty(&data); resEmpty(&res); return(8);
