@@ -273,31 +273,30 @@ case motionchoice of
   3 : begin
   ; ----------------------
   ; Call external optimization program 
-  debug = 1L
-  tstart = float(tstart)
-  tstop = float(tstop)
-  nframe = (size(imgs1))[4]
+  debug       = 1L
+  tstart      = float(tstart)
+  tstop       = float(tstop)
+  nframe      = (size(imgs1))[4]
   imgfilename = pad+'memc_movingPhantom'+nistring(motionchoice)+'.nii'
-  lib = 'build/libmeKineticRigid.so'
-  model = 0   ; 0=patlak, 1=logan
-  fitmethod = 2L
-  plasma_tt = [[0], plasma_t[0:n_elements(plasma_t)-2]] 
+  lib         = 'build/libmeKineticRigid.so'
+  model       = 0   ; 0=patlak, 1=logan
+  fitmethod   = 2L
+  plasma_tt   = [[0], plasma_t[0:n_elements(plasma_t)-2]] 
 
   nframeToFit = npar ;;
-  nparpar = 6*nframeToFit
-  rigmotion = fltarr(6,nframeToFit)
-  parms0 = fltarr(6,nframeToFit) 
+  nparpar     = 6*nframeToFit
+  rigmotion   = fltarr(6,nframeToFit)
+  parms0      = fltarr(6,nframeToFit) 
   ; parms0[0] = parms[1]
   ; parms0[1] = parms[2]
   ; parms0[2] = parms[0]
   ; parms0[3] = parms[5]
   ; parms0[4] = parms[3]
   ; parms0[5] = parms[4]
-  fitIndex = lonarr(nframe)
-  for ipar=0,npar-2 do $
+  fitIndex    = lonarr(nframe)
+  for ipar    = 0,npar-2 do $
     fitIndex[frameIndex[ipar]:frameIndex[ipar+1]] = ipar
-  
-stop
+  stop
   ; fitIndex[imovframe1:imovframe2-1] = 1
   ; fitIndex[imovframe2:imovframe3-1] = 2
   ; fitIndex[imovframe3:nframe-1]     = 3

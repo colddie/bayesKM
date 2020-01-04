@@ -69,6 +69,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	sitk::Image imgs1 = sitk::Image( dims , sitk::sitkFloat32);
 
 	std::vector<float> rigmotions(nframe*6);    //nframe*6
+	std::vector<double> X(pparNr),Y1(pparNr),Y2(pparNr),Y3(pparNr),Y4(pparNr),Y5(pparNr),Y6(pparNr);
     if (slowmotion) {
 		// b-spline interpoolate rigmotion
 		std::vector<float> rigmotions1(nframe); 
@@ -79,19 +80,18 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 		std::vector<float> rigmotions6(nframe); 
 
 		for(int iframe=0;iframe<nframe;iframe++ ) { 
-			int tmpIndex = index[iframe] - 1;
+			int tmpIndex = index[iframe];     // - 1;
 			rigmotions1[iframe] = vals[tmpIndex*6];
 			rigmotions2[iframe] = vals[tmpIndex*6+1];
 			rigmotions3[iframe] = vals[tmpIndex*6+2];
 			rigmotions4[iframe] = vals[tmpIndex*6+3];
 			rigmotions5[iframe] = vals[tmpIndex*6+4];
-			rigmotions6[iframe] = vals[tmpIndex*6+5];
+			rigmotions6[iframe] = vals[tmpIndex*6+5]; printf("%d \n", iframe);
 		}
 
 		// interpoalte for each individual frame
-		std::vector<double> X(pparNr),Y1(pparNr),Y2(pparNr),Y3(pparNr),Y4(pparNr),Y5(pparNr),Y6(pparNr);
 		for (int ipar;ipar<pparNr;ipar++  ) {
-			int tmpIndex2 = Findex[ipar] - 1;
+			int tmpIndex2 = Findex[ipar];      // - 1;
 			X[ipar] = objfn_data->plasma_t[tmpIndex2]; 
 			Y1[ipar] = rigmotions1[tmpIndex2]; 
 			Y2[ipar] = rigmotions2[tmpIndex2]; 
@@ -111,7 +111,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 			rigmotions[iframe*6+2] = s3(objfn_data->plasma_t[iframe]);
 			rigmotions[iframe*6+3] = s4(objfn_data->plasma_t[iframe]);
 			rigmotions[iframe*6+4] = s5(objfn_data->plasma_t[iframe]);
-			rigmotions[iframe*6+5] = s6(objfn_data->plasma_t[iframe]);
+			rigmotions[iframe*6+5] = s6(objfn_data->plasma_t[iframe]);printf("%d \n", iframe);
 		}
 	}
 
@@ -121,7 +121,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 	std::vector<int> extractIndex(4);
 	// std::vector<int> destinationIndex(4);
 	for(int iframe=0;iframe<objfn_data->nframe;iframe++ ) {  
-
+printf("%d \n", iframe);
 		if (index[iframe] == 0) {
 			extractSize = imgs.GetSize();
 			extractSize[3]  = 0;
@@ -176,6 +176,9 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 
     if (verbose == 1 ) {
 		FILE *pfile = fopen(debugfile, "a+");
+		fprintf(pfile, "motions: %f %f %f %f %f %f %f %f \n", rigmotions[0],rigmotions[(nframe-1)*6+5], 
+		                       X[0], X[pparNr-1], Y1[0], Y1[pparNr-1], rigmotions1[0],rigmotions1[nframe-1]);
+		fprintf(pfile, "nframe: %d , \n", nframe);		
 		fprintf(pfile, "index: %d , \n", iframe);
 		fprintf(pfile, "offset: %f, %f %f \n",  rotation_center[0], rotation_center[1], rotation_center[2]);
 		fprintf(pfile, "theta: %f, %f %f \n",  theta_x, theta_y, theta_z);
@@ -183,7 +186,7 @@ extern "C" double Func0(int parNr, double *vals, void *opt_data)
 		fclose(pfile);
 	}
 
-		extractSize = imgs.GetSize();
+		extractSize     = imgs.GetSize();
 		extractSize[3]  = 0;
 		extractIndex[0] = 0;
 		extractIndex[1] = 0;
@@ -331,7 +334,7 @@ extern "C"  int meKineticRigid(int argc, float* argv[])     //meKineticRigid
 	// Read the image
 	//	
 	ll_data opt_data;
-	opt_data.parNr        =  *(size_t *)  argv[0];
+	opt_data.parNr       =  *(size_t *)  argv[0];
     opt_data.nframe      =  *(size_t *)  argv[1];
 	imgfilename          =  std::string((*(idls *) argv[2]).s);
 	parms0               =  (float *)  argv[3];		
@@ -379,12 +382,12 @@ if (opt_data.fitmethod == 1) {
 	lower_bounds[5] = 0.0;	upper_bounds[5] =  0.0;		
 	// lower_bounds[6]
 
-	settings.vals_bound = true;
-    settings.lower_bounds = lower_bounds;
-	settings.upper_bounds = upper_bounds;
+	settings.vals_bound     = true;
+    settings.lower_bounds   = lower_bounds;
+	settings.upper_bounds   = upper_bounds;
     settings.verbose_print_level = 1;   //opt_data.verbose;
 	settings.de_max_fn_eval = 100;
-	settings.de_check_freq = 100;
+	settings.de_check_freq  = 100;
     int success = optim::de(x,Func,&opt_data,settings);
 
     if (success) {
@@ -405,16 +408,9 @@ if (opt_data.fitmethod==2) {
 	for (int i=0;i<opt_data.parNr;i++) { 
 		if (i%6==0 || i%6==1 || i%6==5) { pmin[i] = 0.0;	pmax[i] =  0.0; } 
 		if (i%6==3 || i%6==4)           { pmin[i] = -10.0;	pmax[i] =  10.0; } 
-		if (i%6==2)                     { pmin[i] = -0.3;	pmax[i] =  0.3; } 			
+		if (i%6==2)                     { pmin[i] = -0.3;	pmax[i] =  0.3; } 
+		// printf("pmin and pmax at voxel %f %f",pmin[i],pmax[i]);			
 	}
-    // parNr=6;
-	// pmin[0] = 0.0;	pmax[0] =  0.0;
-	// pmin[1] = 0.0;	pmax[1] =  0.0;
-	// pmin[2] = -0.3;	pmax[2] =  0.3;
-	// pmin[3] = -8.0;	pmax[3] =  8.0;	
-	// pmin[4] = -8.0;	pmax[4] =  8.0;
-	// pmin[5] = 0.0; pmax[5] =  0.0;
-	//pmin[6]
 
     double wss=0;
     // double *output = (double *)malloc(opt_data.parNr*sizeof(double));   // not needed!

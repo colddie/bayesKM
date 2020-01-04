@@ -94,11 +94,11 @@ for iplane=153,157 do begin   ;0, nplane-1 do begin
         end
 
         ; stop
-        cbfall[icol,irow,iplane] = output[0]   ;cbf
-        mttall[icol,irow,iplane] = output[1]   ;mtt
-        delayall[icol,irow,iplane] = output[2]   ;delay
-        cbfall_sd[icol,irow,iplane] = output[5]   ;cbf sd
-        mttall_sd[icol,irow,iplane] = output[6]   ;mtt sd 
+        cbfall[icol,irow,iplane]      = output[0]   ;cbf
+        mttall[icol,irow,iplane]      = output[1]   ;mtt
+        delayall[icol,irow,iplane]    = output[2]   ;delay
+        cbfall_sd[icol,irow,iplane]   = output[5]   ;cbf sd
+        mttall_sd[icol,irow,iplane]   = output[6]   ;mtt sd 
         delayall_sd[icol,irow,iplane] = output[7]   ;delay sd       
         ; cbv = cbf*mtt/60;
         ; ttp = where(tac eq max(tac));
