@@ -17,7 +17,7 @@ extern "C" int patlak_c(unsigned int frameNr, double *t0, double *t1,double *tac
 
 extern "C" double Func (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data);
 
-extern "C" int meKineticRigid(int argc, float* argv[]);
+extern "C" int main(int argc, float* argv[]);
 
 
 #endif
