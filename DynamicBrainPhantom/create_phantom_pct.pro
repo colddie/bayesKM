@@ -79,7 +79,7 @@ delaysr_var = 1.0
 ; % tissue attenuation offsets
 HU_GM = 35
 HU_WM = 29
-HU_V = 40
+HU_V = 50
 HU_CSF = 12;
 HU_GM_VAR = 3
 HU_WM_VAR = 3
@@ -272,7 +272,7 @@ for z=0,nplane-1 do begin
         tac_index = round(t[ti]/0.1) ;+ 1;
         sliceposition = array_indices(baselineslice,idx);
         ; [slice_x slice_y] = ind2sub(size(baselineslice),idx);
-        tacslice[sliceposition[0],sliceposition[1],ti] = baselineslice[idx];
+        tacslice[sliceposition[0],sliceposition[1],ti] = aif[tac_index]+baselineslice[idx];
         endfor
     endfor
   endif
@@ -327,7 +327,7 @@ endfor
 
 
 stop
-save,filename='tmp_delay.sav', cbfall,tacall,mttall,baselineall,delayall
+save,filename='tmp_delay_new.sav', cbfall,tacall,mttall,baselineall,delayall
 
 
 ; plasma_t, plasma_c

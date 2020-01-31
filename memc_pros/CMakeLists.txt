@@ -109,8 +109,8 @@ add_subdirectory(libtpcimgio)
 # )
 
 
-add_executable (meKineticRigid  meKineticRigid.cxx patlak_c.cxx)   # meKineticRigid.h)  #patlak_idl.cxx
-# add_library(meKineticRigid_exe SHARED meKineticRigid.cxx patlak_c.cxx meKineticRigid.h)
+#add_executable ( meKineticRigid meKineticRigid.cxx libtpcimgp.h libtpcmisc.h tpcclibConfig.h  )  #patlak_idl.cxx
+add_library(meKineticRigid SHARED meKineticRigid.cxx patlak_c.cxx meKineticRigid.h)
 # ${FIT_USE_FILE}/petc99.cxx ${FIT_USE_FILE}/bootstrapr.cxx ${FIT_USE_FILE}/pearson.cxx 
 # ${FIT_USE_FILE}/nnls.cxx ${FIT_USE_FILE}/gaussdev.cxx ${FIT_USE_FILE}/bobyqa.cxx
 # ${FIT_USE_FILE}/powell.cxx ${FIT_USE_FILE}/tgo.h ${FIT_USE_FILE}/tgo.cxx)
@@ -146,5 +146,7 @@ gomp libtpcimgp libtpcsvg libtpcimgio libtpcmodel libtpcmodext libtpcmisc libtpc
 #install(TARGETS  rawTomhalib 
 #         ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX})		 
 install(TARGETS  meKineticRigid
-         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}         )     ## was ARCHIVE
+         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}         
+         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
+         ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX})     ## was ARCHIVE
 		 

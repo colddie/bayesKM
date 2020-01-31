@@ -40,15 +40,6 @@
     endif 
 
 
-    ;;;;;;;
-    ;  motion applied on projections
-    if 0 then begin
-    
-        stop
-    endif
-
-
-
  cgplot,ts,aif/10,yrange=[-10,250]     
  cgplot,congrid(ts/10,50),tacall_transform[155,114,154,*],col=1,yrange=[-10,250],/noerase
  cgplot,congrid(ts/10,50),tacall_transform[104,151,154,*],col=2,yrange=[-10,250],/noerase
@@ -56,6 +47,44 @@
  cgplot,congrid(ts/10,50),tacall_transform[179,119,154,*],col=5,yrange=[-10,250],/noerase
  cgLegend, color=[0,1,2,4,5],Symsize=1.5, Location=[0.625, 0.9], $
       Titles=['AIF','infact','severe-infact','grey','white'], Length=0.075, /Box, VSpace=2.75
+
+
+
+
+
+
+
+
+
+
+
+    ;;;;;;;
+    ;  motion applied on projections
+    if 0 then begin
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+        stop
+    endif
+
+
+
+
+
+
+
 
 
 End

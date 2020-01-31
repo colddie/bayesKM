@@ -241,6 +241,9 @@ for z=1:size(brain,3)
             end
         end
     end    
+    
+    
+
     % save baseline slice
     skullslice = skull(:,:,z);
     count = size(brain,1)*size(brain,2);
@@ -313,6 +316,9 @@ for z=1:size(brain,3)
     end
     fclose(fid);
 end
+
+
+    keyboard
 end
 
 

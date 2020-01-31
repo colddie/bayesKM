@@ -3,7 +3,7 @@ test  = 0
 debug = 0
 
 
-restore,filename = '/home/tsun/data/CTperfusion_sydney.sav'
+restore,filename = '/home/tsun/data/Helical/CTperfusion_sydney.sav'
 workimg = r.regimgs ;regimgs      ;frame
 nframe = (size(workimg))[4];
 nplane = (size(workimg))[3];

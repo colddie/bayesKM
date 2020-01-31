@@ -62,7 +62,7 @@ stop
 
 ; ----------------------
 ; Simulating motion in phantoms
-motionchoice = 3
+motionchoice = 1
 
 case motionchoice of
   1 : begin
@@ -264,9 +264,10 @@ case motionchoice of
   fitIndex[imovframe3:nframe-1]     = 3
   ; fitIndex[imovframe:nframe-1] = 1    ;;[0.0,...,1,1,...]
   frameIndex = [imovframe1,imovframe2,imovframe3]
+  stop
   success = call_external(lib, 'meKineticRigid', npar, nframe, imgfilename, parms0, tstart, tstop, $
                           double(plasma_tt),double(plasma_t),double(plasma_c),model,fitmethod,rigmotion, $
-                          fitIndex, frameIndex, debug, 1L)
+                          fitIndex, frameIndex, debug, 0L)
   end
 
 
@@ -304,7 +305,7 @@ case motionchoice of
   
   success = call_external(lib, 'meKineticRigid', nparpar, nframe, imgfilename, parms0, tstart, tstop, $
                           double(plasma_tt),double(plasma_t),double(plasma_c),model,fitmethod,rigmotion, $
-                          fitIndex, frameIndex, debug, 1L)    ; estiamte slow motion
+                          fitIndex, frameIndex, debug, 0L)    ; estiamte slow motion
 
   end
 
