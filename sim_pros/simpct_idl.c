@@ -63,6 +63,8 @@ int simpct_idl(int argc, float * argv[])
   int     n = frameNr;
   int     m = frameNr;
   for (int i=0;i<n;i++) { 
+    // data[i]=cbf*exp( -(ts[i]-mtt)); 
+    // if (ts[i] < delay) { data[i] = 0.0; } 
     data[i]=cbf*exp( -(ts[i]-mtt-delay)); 
     if (ts[i] < mtt+delay) { data[i] = cbf; }
     if (ts[i] < delay) { data[i] = 0.0; }    // !

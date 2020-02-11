@@ -515,7 +515,7 @@ case testmode of
     
     cbf = 20         ; too small mtt svd make underestimated cbf
     mtt = 10       
-    delay = 5.0       ; too small svd not working
+    delay = 1.0       ; too small svd not working
     tac = double(fltarr(n_elements(ts)))
     lib = '/home/tsun/bin/tpcclib-master/build/bin/libmtga_idl.so'
     success = call_external(lib,'simpct_idl',double(ts),double(aif),long(n_elements(ts)),double(cbf),double(mtt),double(delay),tac)

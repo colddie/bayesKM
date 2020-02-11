@@ -42,28 +42,28 @@ delay    = 0
 gm_cbv = 3.3
 gm_cbf = 53; 
 gm_mtt = (gm_cbv/gm_cbf)*60;
-gm_delay = 0.0;   
+gm_delay = 1.0;   
 gmr_cbv = 3;
 gmr_cbf = 16;
 gmr_mtt = (gmr_cbv/gmr_cbf)*60; 
-gmr_delay = 1.0;    
+gmr_delay = 1.0*4;    
 gmsr_cbv = 0.71;
 gmsr_cbf = 5.3;
 gmsr_mtt = (gmsr_cbv/gmsr_cbf)*60;   
-gmsr_delay = 3.0;   
+gmsr_delay = 3.0*3;   
 
 wm_cbv = 1.9;
 wm_cbf = 25;
 wm_mtt = (wm_cbv/wm_cbf)*60;  
-wm_delay = 0.0;    
+wm_delay = 1.0;    
 wmr_cbv = 1.7;   
 wmr_cbf = 7.5; 
 wmr_mtt = (wmr_cbv/wmr_cbf)*60;    
-wmr_delay = 2.0;   
+wmr_delay = 2.0*4;   
 wmsr_cbv = 0.42;
 wmsr_cbf = 2.5;
 wmsr_mtt = (wmsr_cbv/wmsr_cbf)*60;  
-wmsr_delay = 4.0;   
+wmsr_delay = 4.0*3;   
 
 ; % define perfusion parameter variation w.r.t. mr data
 cbf_var = 14;
@@ -327,7 +327,8 @@ endfor
 
 
 stop
-save,filename='tmp_delay_new.sav', cbfall,tacall,mttall,baselineall,delayall
+; save,filename='tmp_delay.sav', cbfall,tacall,mttall,baselineall,delayall,aif,ts
+save,filename='tmp_delay_new.sav', cbfall,tacall,mttall,baselineall,delayall,aif,ts
 
 
 ; plasma_t, plasma_c
