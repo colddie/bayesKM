@@ -19,13 +19,13 @@ for iframe=0,nframe-1 do begin
     tacall[*,*,*,iframe] = tacall[*,*,*,iframe]  > 0
 endfor
 
-dosmooth = 0
+dosmooth = 0     ; 4D bilateral filtering
 if dosmooth then begin
 for iplane=11,12 do $
     tacall[*,*,iplane,*] = transpose(bilateral(transpose(reform(tacall[*,*,iplane,*]), $
       [2,0,1]),3,0.012),[1,2,0])    ;0.00012
 endif
-
+stop
 cbfall    = fltarr(ncol,nrow,nplane)
 mttall    = cbfall*0
 delayall  = cbfall*0

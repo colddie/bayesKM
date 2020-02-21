@@ -332,14 +332,14 @@ save,filename='tmp_delay_new.sav', cbfall,tacall,mttall,baselineall,delayall,aif
 
 
 ; plasma_t, plasma_c
-  fname= 'plasma_t.txt'
-  OPENW,1,fname 
-  PRINTF,1,plasma_t   ; ts?
-  CLOSE,1
-  fname= 'plasma_c.txt'
-  OPENW,1,fname 
-  PRINTF,1,plasma_c  ; aif?
-  CLOSE,1
+fname= 'plasma_t.txt'
+OPENW,1,fname 
+PRINTF,1,plasma_t   ; ts?
+CLOSE,1
+fname= 'plasma_c.txt'
+OPENW,1,fname 
+PRINTF,1,plasma_c  ; aif?
+CLOSE,1
 
 ; create mask image
 mask[where(cbfall gt 0.0)] = 1.0

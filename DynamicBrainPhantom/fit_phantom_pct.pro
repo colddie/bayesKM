@@ -3,10 +3,11 @@ test              = 0
 debug             = 0
 presmooth         = 1
 usemotion         = 0
-simulate_interval = 1
+simulate_interval = 0
 simulate_AIF      = 0
 has_delay         = 0
-noisefree         = 0     ;1-noisy
+noisefree         = 1     ;1-noisy
+use_svd           = 1
 
 ; restore, filename='tmp.sav'
 ; restore,filename='tmp_delay.sav'
@@ -30,6 +31,8 @@ if presmooth then begin
   endfor
 endif
 
+; restore,filename='tmp_delay_new.sav'
+; reconall =tacall 
 
 
 ; cbfall_ref = cbfall
@@ -59,8 +62,8 @@ nrow     = 256;
 ; endif
 
 ; goto,line0
-goto, line1
-; goto, line2
+if use_svd then goto, line1
+; if use_pmap then goto, line2
 
 
 line0:
@@ -68,7 +71,7 @@ line0:
 isweight      = 1
 def_pmin      = [0.0,0.00001,0.0]     ; cbf, mtt; cbv and delay are calculated 
 def_pmax      = [100.0,100.0,0.0]  
-doSD          = 1
+doSD          = 0
 doCL          = 0
 bootstrapIter = 200  ; has to be larger than 100!
 if has_delay eq 1 then def_pmax[2] = 12.0
@@ -207,6 +210,7 @@ last   = 49    ; 200     ; depends ont mtt
 ;--- plane based compromise between speed and memory ----
 inmap  = inmap[*,*,151:152,*]    ;153:157
 nframe = (size(inmap))[4]
+index  = ts*0
 if simulate_interval then begin
     undersample = 4
     t     = indgen(frameNr)*dt;  

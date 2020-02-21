@@ -58,7 +58,7 @@ int simpct_idl(int argc, float * argv[])
   delay         =  *(double*)    argv[5];
   tac           =  (double *)    argv[6];
 
-  cbf         = cbf/6000.0;              //% ml/100ml/min = 1/(100*60s)
+  cbf       = cbf/6000.0;              //% ml/100ml/min = 1/(100*60s)
   double  data[frameNr];
   int     n = frameNr;
   int     m = frameNr;

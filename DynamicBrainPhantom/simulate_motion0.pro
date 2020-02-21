@@ -46,17 +46,23 @@
 
     ;;;;;;;
     ; TAC plot
-    cgplot,congrid(ts/10,50),aif/10,yrange=[-10,250]     
-    cgplot,congrid(ts/10,50),tacall_transform[155,114,154,*],col=1,yrange=[-10,250],/noerase
-    cgplot,congrid(ts/10,50),tacall_transform[104,151,154,*],col=2,yrange=[-10,250],/noerase
-    cgplot,congrid(ts/10,50),tacall_transform[146,99,154,*],col=4,yrange=[-10,250],/noerase 
-    cgplot,congrid(ts/10,50),tacall_transform[179,119,154,*],col=5,yrange=[-10,250],/noerase
-    cgLegend, color=[0,1,2,4,5],Symsize=1.5, Location=[0.625, 0.9], $
-          Titles=['AIF','infact','severe-infact','grey','white'], Length=0.075, /Box, VSpace=2.75
+    cgplot,congrid(ts,50),congrid(aif,nframe),yrange=[-10,500]     
+    cgplot,congrid(ts,50),tacall[103,119,151,*],col=1,yrange=[-10,500],/noerase
+    cgplot,congrid(ts,50),tacall[105,84,151,*],col=4,yrange=[-10,500],/noerase 
+    cgplot,congrid(ts,50),tacall[104,51,151,*],col=5,yrange=[-10,500],/noerase
+    cgLegend, color=[0,1,4,5],Symsize=1.5, Location=[0.625, 0.9], $
+          Titles=['AIF','infact','grey','white'], Length=0.075, /Box, VSpace=2.75
+    ; cgplot,congrid(ts/10,50),aif/10,yrange=[-10,250]     
+    ; cgplot,congrid(ts/10,50),tacall_transform[155,114,154,*],col=1,yrange=[-10,250],/noerase
+    ; cgplot,congrid(ts/10,50),tacall_transform[104,151,154,*],col=2,yrange=[-10,250],/noerase
+    ; cgplot,congrid(ts/10,50),tacall_transform[146,99,154,*],col=4,yrange=[-10,250],/noerase 
+    ; cgplot,congrid(ts/10,50),tacall_transform[179,119,154,*],col=5,yrange=[-10,250],/noerase
+    ; cgLegend, color=[0,1,2,4,5],Symsize=1.5, Location=[0.625, 0.9], $
+    ;       Titles=['AIF','infact','severe-infact','grey','white'], Length=0.075, /Box, VSpace=2.75
 
 
 
-
+stop
 
 
     ;;;;;;;
