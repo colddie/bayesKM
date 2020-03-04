@@ -1,10 +1,10 @@
 ; turn off delay estimation temporally
 test  = 0
 debug = 0
-
+range_extend = 1
 
 restore,filename = '/home/tsun/data/Helical/CTperfusion_sydney.sav'
-workimg = r.regimgs ;regimgs      ;frame
+workimg = frame ;regimgs - corrected     ;frame - uncorrected    ; r.frame - intermediate
 nframe = (size(workimg))[4];
 nplane = (size(workimg))[3];
 ncol   = (size(workimg))[2];
@@ -25,7 +25,7 @@ for iplane=11,12 do $
     tacall[*,*,iplane,*] = transpose(bilateral(transpose(reform(tacall[*,*,iplane,*]), $
       [2,0,1]),3,0.012),[1,2,0])    ;0.00012
 endif
-stop
+
 cbfall    = fltarr(ncol,nrow,nplane)
 mttall    = cbfall*0
 delayall  = cbfall*0
@@ -82,7 +82,11 @@ stop
 ;; ------------------------------
 isweight = 1
 def_pmin = [-100.0,-100.0, 0.0]    ;[0.0,0.00001,0.0]     ; cbf, mtt; cbv and ttp are calculated 
-def_pmax = [100.0,100.,0.0]    ;[100.0,100.0,0.0]  
+def_pmax = [100.0,100.,0.0]    ;[100.0,100.0,0.0] 
+if range_extend eq 1 then begin 
+   def_pmin[0] *= 4
+   def_pmax[0] *= 4
+endif 
 doSD = 1
 doCL = 0
 bootstrapIter = 200  ; has to be larger than 100!
