@@ -6,7 +6,6 @@ pad = '/home/tsun/bin/fsl/install/src/fabber_core/fabber_pet_c1/'
 ; tmpimg = niread_nii(pad+'actimg_fdgC2_0.00000_0.00500000_noise.nii')
 ; tmpimg = niread_nii(pad+'actimg_fdgC2.nii')
 restore, filename = pad+'actimg_fdgC2.sav'
-;restore
 
 stop
 
@@ -168,7 +167,6 @@ for jvoxel = 0, long(nrcols)*nrrows*nrplanes-1 do begin
                   double(plasma_t), double(tac), $
                   double(plasma_c),double(tstart),double(tstop),double(output),long(debug),long(llsq_model),$
                   long(isweight)) 
-      ; success = 
       Kiimg[jvoxel]   = output[0]
       Kiimgsd[jvoxel] = output[1]
       Vbimg[jvoxel]   = output[2]
@@ -200,7 +198,7 @@ for jvoxel = 0, long(nrcols)*nrrows*nrplanes-1 do begin
                       double(rwmh_par_scale),double(hmc_step_size),long(rwmh_n_burnin),long(rwmh_n_draws),long(model),$
                       long(debug),long(mcmc),long(useprior),$
                       double(plasma_t0), double(tstart), double(tstop)) 
-      ; success = 
+
       Kiimg[jvoxel] = mean(output(*,0))
       Vbimg[jvoxel] = mean(output(*,1)) 
       Kiimgsd[jvoxel] = stddev(output(*,0))
@@ -286,7 +284,6 @@ for jvoxel = 0, long(n1)*n2*n3-1 do begin
                 double(plasma_t), double(reform(tac)), $
                 double(plasma_cc),double(tstart),double(tstop),double(output),long(debug),long(llsq_model),$
                 long(isweight)) 
-    ; success = 
     Kisino[jvoxel]   = output[0]
     Kisinosd[jvoxel] = output[1]
     Vbsino[jvoxel]   = output[2]
